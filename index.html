@@ -8,18 +8,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script>
-window.addEventListener('load',function(){
-  if(typeof supabase==='undefined'){
-    var s=document.createElement('script');
-    s.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
-    s.onload=function(){console.log('Supabase loaded via fallback');};
-    s.onerror=function(){document.getElementById('cdn-error').style.display='block';};
-    document.head.appendChild(s);
-  }
-});
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 
 
