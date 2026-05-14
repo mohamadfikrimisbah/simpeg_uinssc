@@ -1529,6 +1529,35 @@
             <div style="font-size: 11px; color: var(--text3); margin-top: 4px">
               Gunakan email & password yang didaftarkan Admin di Supabase
             </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-top: 8px;
+              "
+            >
+              <input
+                type="checkbox"
+                id="remember-me"
+                style="
+                  width: 15px;
+                  height: 15px;
+                  accent-color: #12aa6e;
+                  cursor: pointer;
+                "
+              />
+              <label
+                for="remember-me"
+                style="
+                  font-size: 13px;
+                  color: #2d5c47;
+                  cursor: pointer;
+                  user-select: none;
+                "
+                >Ingat saya</label
+              >
+            </div>
           </div>
           <button
             class="btn btn-primary"
@@ -1537,6 +1566,17 @@
           >
             🔐 Masuk
           </button>
+          <script>
+            document.addEventListener("DOMContentLoaded", function () {
+              ["login-user", "login-pass"].forEach(function (id) {
+                document
+                  .getElementById(id)
+                  .addEventListener("keydown", function (e) {
+                    if (e.key === "Enter") doLogin();
+                  });
+              });
+            });
+          </script>
         </div>
       </div>
     </div>
@@ -2626,6 +2666,8 @@
             await loadProfile();
             document.getElementById("login-screen").classList.add("hidden");
             document.getElementById("app").style.display = "flex";
+            // Selalu mulai dari dashboard
+            showView("dashboard", document.querySelector(".nav-item"));
             await initApp();
           }
         } catch (e) {
@@ -2643,6 +2685,7 @@
       async function doLogin() {
         var email = document.getElementById("login-user").value.trim();
         var pass = document.getElementById("login-pass").value.trim();
+        var remember = document.getElementById("remember-me").checked;
         if (!email || !pass) {
           toast("Email dan password wajib diisi!", "error");
           return;
@@ -2659,9 +2702,17 @@
           });
           if (res.error) throw res.error;
           currentUser = res.data.user;
+          // Simpan email jika remember me dicentang
+          if (remember) {
+            localStorage.setItem("simpeg_remember_email", email);
+          } else {
+            localStorage.removeItem("simpeg_remember_email");
+          }
           await loadProfile();
           document.getElementById("login-screen").classList.add("hidden");
           document.getElementById("app").style.display = "flex";
+          // Selalu reset ke dashboard saat login
+          showView("dashboard", document.querySelector(".nav-item"));
           await initApp();
           toast(
             "Selamat datang, " +
@@ -3927,13 +3978,11 @@
             document.getElementById("loading-text").textContent =
               "Mengimport... " + inserted + "/" + dbRows.length;
           }
-          await db
-            .from("import_log")
-            .insert({
-              user_id: currentUser.id,
-              jumlah: inserted,
-              filename: "import",
-            });
+          await db.from("import_log").insert({
+            user_id: currentUser.id,
+            jumlah: inserted,
+            filename: "import",
+          });
           await loadPegawai();
           importLog.unshift({
             time: new Date().toLocaleString("id-ID"),
@@ -4464,6 +4513,13 @@
       // START
       // ============================================================
       function startApp() {
+        // Load email tersimpan jika ada
+        var savedEmail = localStorage.getItem("simpeg_remember_email");
+        if (savedEmail) {
+          document.getElementById("login-user").value = savedEmail;
+          document.getElementById("remember-me").checked = true;
+        }
+
         if (!initSupabase()) {
           var retry = 0;
           var interval = setInterval(function () {
