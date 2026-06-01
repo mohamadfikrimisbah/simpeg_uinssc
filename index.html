@@ -1637,6 +1637,9 @@
         <div class="nav-item admin-only" onclick="showView('pensiun', this)">
           <span class="nav-icon">📅</span> Proyeksi Pensiun
         </div>
+        <div class="nav-item admin-only" onclick="showView('purnatugas', this)">
+          <span class="nav-icon">🎓</span> Purna Tugas
+        </div>
         <div class="nav-item admin-only" onclick="showView('users', this)">
           <span class="nav-icon">🔐</span> Manajemen User
         </div>
@@ -2190,6 +2193,56 @@
             <div id="pensiun-content"></div>
           </div>
 
+          <!-- PURNA TUGAS -->
+          <div class="view" id="view-purnatugas">
+            <div class="section-header">
+              <div>
+                <div class="section-title">Data Pegawai Purna Tugas</div>
+                <div class="section-sub" id="purna-count">Memuat...</div>
+              </div>
+              <div class="search-bar">
+                <div class="input-wrap">
+                  <span class="input-icon">🔍</span
+                  ><input
+                    type="text"
+                    placeholder="Cari nama / NIP..."
+                    id="purna-search"
+                    oninput="filterPurna()"
+                  />
+                </div>
+                <div class="input-wrap">
+                  <select id="purna-filter-jenis" onchange="filterPurna()">
+                    <option value="">Semua Jenis</option>
+                    <option>Dosen</option>
+                    <option>Tendik</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="table-scroll-outer">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>NIP</th>
+                    <th>Nama</th>
+                    <th>Gender</th>
+                    <th>Jabatan Terakhir</th>
+                    <th>Golongan</th>
+                    <th>Unit Kerja</th>
+                    <th>Jenis</th>
+                    <th>Pendidikan</th>
+                    <th>TMT Pensiun</th>
+                  </tr>
+                </thead>
+                <tbody id="purna-body"></tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <div class="pagination-info" id="purna-page-info"></div>
+              <div class="pagination-btns" id="purna-page-btns"></div>
+            </div>
+          </div>
+
           <!-- USER MANAGEMENT -->
           <div class="view" id="view-users">
             <div class="section-header">
@@ -2525,7 +2578,7 @@
               />
             </div>
             <div class="form-group">
-              <label class="form-label">Nama Lengkap</label
+              <label class="form-label">Nama Lengkap dan Gelar</label
               ><input class="form-input" id="eu-nama" />
             </div>
             <div class="form-group">
@@ -2809,6 +2862,10 @@
         import: ["Import Data", "/ Upload Excel / CSV"],
         pensiun: ["Proyeksi Pensiun", "/ 10 Tahun Ke Depan"],
         users: ["Manajemen User", "/ Kelola Akun Pengguna"],
+        purnatugas: [
+          "Purna Tugas",
+          "/ Data Pegawai yang Telah Memasuki Masa Pensiun",
+        ],
       };
 
       function showView(v, el) {
@@ -2833,6 +2890,7 @@
         }
         if (v === "users") renderUserGrid();
         if (v === "pensiun") renderPensiun();
+        if (v === "purnatugas") renderPurna();
       }
 
       // ============================================================
@@ -2858,6 +2916,7 @@
           tahunLulus: r.tahun_lulus,
           tugasTambahan: r.tugas_tambahan || null,
           nomorAlmari: r.nomor_almari || null,
+          statusAktif: r.status_aktif !== false,
         };
       }
 
@@ -2880,12 +2939,17 @@
           tahun_lulus: parseInt(p.tahunLulus) || null,
           tugas_tambahan: p.tugasTambahan || null,
           nomor_almari: p.nomorAlmari || null,
+          status_aktif: p.statusAktif !== false,
         };
       }
 
       // ============================================================
       // LOAD DATA
       // ============================================================
+      var purnaData = [];
+      var purnaFiltered = [];
+      var purnaPage = 1;
+
       async function loadPegawai() {
         var res = await db
           .from("pegawai")
@@ -2895,8 +2959,17 @@
           toast("Gagal memuat data: " + res.error.message, "error");
           return;
         }
-        pegawaiData = (res.data || []).map(mapFromDb);
+        var all = (res.data || []).map(mapFromDb);
+
+        // Pisahkan berdasarkan status_aktif
+        pegawaiData = all.filter(function (p) {
+          return p.statusAktif !== false;
+        });
+        purnaData = all.filter(function (p) {
+          return p.statusAktif === false;
+        });
         filteredData = pegawaiData.slice();
+        purnaFiltered = purnaData.slice();
         populateUnitFilter();
       }
 
@@ -3419,13 +3492,18 @@
         if (currentPage < pages) addPageBtn(pb, ">", currentPage + 1);
       }
 
-      function addPageBtn(container, label, pg, active) {
+      function addPageBtn(container, label, pg, active, mode) {
         var b = document.createElement("button");
         b.className = "page-btn" + (active ? " active" : "");
         b.textContent = label;
         b.onclick = function () {
-          currentPage = pg;
-          renderTable();
+          if (mode === "purna") {
+            purnaPage = pg;
+            renderPurna();
+          } else {
+            currentPage = pg;
+            renderTable();
+          }
         };
         container.appendChild(b);
       }
@@ -4144,6 +4222,93 @@
         XLSX.utils.book_append_sheet(wb, ws2, "Referensi Nilai");
         XLSX.writeFile(wb, "template_pegawai_simpeg.xlsx");
         toast("Template Excel berhasil diunduh!", "success");
+      }
+
+      // ============================================================
+      // PURNA TUGAS
+      // ============================================================
+      function filterPurna() {
+        var q = document.getElementById("purna-search").value.toLowerCase();
+        var jn = document.getElementById("purna-filter-jenis").value;
+        purnaFiltered = purnaData.filter(function (p) {
+          return (
+            (!q ||
+              p.nama.toLowerCase().indexOf(q) >= 0 ||
+              p.nip.indexOf(q) >= 0) &&
+            (!jn || p.jenis === jn)
+          );
+        });
+        purnaPage = 1;
+        renderPurna();
+      }
+
+      function renderPurna() {
+        var total = purnaFiltered.length;
+        var pages = Math.ceil(total / PAGE_SIZE);
+        var start = (purnaPage - 1) * PAGE_SIZE;
+        var slice = purnaFiltered.slice(start, start + PAGE_SIZE);
+        document.getElementById("purna-count").textContent =
+          total + " pegawai purna tugas";
+        document.getElementById("purna-page-info").textContent =
+          start +
+          1 +
+          "–" +
+          Math.min(start + PAGE_SIZE, total) +
+          " dari " +
+          total;
+        var rows = "";
+        slice.forEach(function (p) {
+          var gBadge =
+            p.gender === "Laki-laki"
+              ? '<span class="badge badge-lk">♂ L-L</span>'
+              : '<span class="badge badge-pr">♀ Pr</span>';
+          var jnBadge =
+            '<span class="badge ' +
+            (p.jenis === "Dosen" ? "badge-dosen" : "badge-tendik") +
+            '">' +
+            p.jenis +
+            "</span>";
+          rows +=
+            "<tr>" +
+            '<td class="mono">' +
+            p.nip +
+            "</td>" +
+            '<td class="bold">' +
+            p.nama +
+            "</td>" +
+            "<td>" +
+            gBadge +
+            "</td>" +
+            "<td>" +
+            p.jabatan +
+            "</td>" +
+            '<td style="font-family:var(--mono);font-size:12px">' +
+            p.golongan +
+            "</td>" +
+            "<td>" +
+            p.unit +
+            "</td>" +
+            "<td>" +
+            jnBadge +
+            "</td>" +
+            '<td><span class="badge" style="background:rgba(99,102,241,.15);color:#6366f1">' +
+            p.pendidikan +
+            "</span></td>" +
+            '<td style="font-family:var(--mono);font-size:12px;color:#ef4444">' +
+            (p.pensiun || "-") +
+            "</td>" +
+            "</tr>";
+        });
+        document.getElementById("purna-body").innerHTML =
+          rows ||
+          '<tr><td colspan="9" style="text-align:center;padding:40px;color:#6b9e88">Tidak ada data pegawai purna tugas</td></tr>';
+        var pb = document.getElementById("purna-page-btns");
+        pb.innerHTML = "";
+        if (purnaPage > 1) addPageBtn(pb, "<", purnaPage - 1, "purna");
+        for (var i = 1; i <= pages; i++)
+          if (i === 1 || i === pages || Math.abs(i - purnaPage) <= 1)
+            addPageBtn(pb, i, i, i === purnaPage, "purna");
+        if (purnaPage < pages) addPageBtn(pb, ">", purnaPage + 1, "purna");
       }
 
       // ============================================================
