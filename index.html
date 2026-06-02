@@ -1626,6 +1626,12 @@
         <div class="nav-item" onclick="showView('pegawai', this)">
           <span class="nav-icon">👥</span> Data Pegawai
         </div>
+        <div class="nav-item" onclick="showView('pensiun', this)">
+          <span class="nav-icon">📅</span> Proyeksi Pensiun
+        </div>
+        <div class="nav-item" onclick="showView('purnatugas', this)">
+          <span class="nav-icon">🎓</span> Purna Tugas
+        </div>
 
         <div class="sidebar-section-label admin-only">Administrasi</div>
         <div class="nav-item admin-only" onclick="showView('tambah', this)">
@@ -1633,12 +1639,6 @@
         </div>
         <div class="nav-item admin-only" onclick="showView('import', this)">
           <span class="nav-icon">📂</span> Import Data
-        </div>
-        <div class="nav-item admin-only" onclick="showView('pensiun', this)">
-          <span class="nav-icon">📅</span> Proyeksi Pensiun
-        </div>
-        <div class="nav-item admin-only" onclick="showView('purnatugas', this)">
-          <span class="nav-icon">🎓</span> Purna Tugas
         </div>
         <div class="nav-item admin-only" onclick="showView('users', this)">
           <span class="nav-icon">🔐</span> Manajemen User
@@ -4637,7 +4637,7 @@
         var csv = [headers]
           .concat(rows)
           .map(function (r) {
-            return r.join(",");
+            return r.join(";");
           })
           .join("\n");
         var a = document.createElement("a");
