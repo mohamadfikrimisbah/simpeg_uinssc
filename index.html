@@ -658,6 +658,69 @@
         background: rgba(22, 208, 134, 0.12);
         color: #0d8a58;
       }
+      .badge-draft {
+        background: rgba(148, 163, 184, 0.18);
+        color: #cbd5e1;
+      }
+      .badge-menunggu {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+      }
+      .badge-selesai {
+        background: rgba(22, 208, 134, 0.15);
+        color: #16d086;
+      }
+      .pengusul-search-wrap {
+        position: relative;
+      }
+      .pengusul-suggest {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        max-height: 220px;
+        overflow-y: auto;
+        background: #0d2b22;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        z-index: 40;
+        display: none;
+      }
+      .pengusul-suggest.open {
+        display: block;
+      }
+      .pengusul-suggest-item {
+        padding: 9px 14px;
+        cursor: pointer;
+        font-size: 13px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .pengusul-suggest-item:hover {
+        background: rgba(22, 208, 134, 0.1);
+      }
+      .pengusul-suggest-item:last-child {
+        border-bottom: none;
+      }
+      .pengusul-row-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+      .pengusul-row-table th,
+      .pengusul-row-table td {
+        padding: 8px 10px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .pengusul-row-table select {
+        background: rgba(255, 255, 255, 0.06);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 6px;
+        padding: 4px 6px;
+        font-size: 12px;
+      }
 
       /* PAGINATION */
       .pagination {
@@ -1643,6 +1706,12 @@
         <div class="nav-item admin-only" onclick="showView('users', this)">
           <span class="nav-icon">🔐</span> Manajemen User
         </div>
+        <div
+          class="nav-item admin-only"
+          onclick="showView('otomasi-kenaikan', this)"
+        >
+          <span class="nav-icon">📄</span> Otomasi Dokumen
+        </div>
 
         <div class="sidebar-footer">
           <div class="user-chip" onclick="logout()">
@@ -2243,6 +2312,49 @@
             </div>
           </div>
 
+          <!-- OTOMASI DOKUMEN KENAIKAN -->
+          <div class="view" id="view-otomasi-kenaikan">
+            <div class="section-header">
+              <div>
+                <div class="section-title">Otomasi Dokumen Kenaikan</div>
+                <div class="section-sub">
+                  Generate Surat Pengantar &amp; SPTJM Kenaikan Pangkat otomatis
+                </div>
+              </div>
+              <button
+                class="btn btn-primary"
+                onclick="openModalPengajuanBaru()"
+              >
+                ➕ Buat Pengajuan
+              </button>
+            </div>
+
+            <div class="table-scroll-outer">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Tanggal Surat</th>
+                    <th>No. Surat</th>
+                    <th>Jumlah Pengusul</th>
+                    <th>Pejabat Penandatangan</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="pengajuan-body">
+                  <tr>
+                    <td
+                      colspan="6"
+                      style="text-align: center; padding: 24px; opacity: 0.6"
+                    >
+                      Memuat...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- USER MANAGEMENT -->
           <div class="view" id="view-users">
             <div class="section-header">
@@ -2624,6 +2736,153 @@
       </div>
     </div>
 
+    <!-- PENGAJUAN BARU MODAL -->
+    <div class="modal-overlay" id="modal-pengajuan-baru">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">➕ Buat Pengajuan Kenaikan Pangkat</div>
+          <button
+            class="modal-close"
+            onclick="closeModal('modal-pengajuan-baru')"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <div class="form-group">
+              <label class="form-label">Paket Kenaikan *</label>
+              <select class="form-select" id="pb-paket" disabled>
+                <option value="kenaikan_pangkat">Kenaikan Pangkat</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tanggal Surat *</label>
+              <input class="form-input" type="date" id="pb-tanggal" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pejabat Penandatangan (SPTJM) *</label>
+              <select class="form-select" id="pb-pejabat"></select>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="form-group pengusul-search-wrap">
+              <label class="form-label">Cari &amp; Tambah Pengusul *</label>
+              <input
+                class="form-input"
+                id="pb-cari-pengusul"
+                placeholder="Ketik nama atau NIP pegawai..."
+                oninput="filterPengusulSuggest()"
+                onfocus="filterPengusulSuggest()"
+              />
+              <div class="pengusul-suggest" id="pb-suggest"></div>
+            </div>
+
+            <table class="pengusul-row-table">
+              <thead>
+                <tr>
+                  <th>Nama / NIP</th>
+                  <th>Gol. Lama</th>
+                  <th>Gol. Baru</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="pb-pengusul-body">
+                <tr>
+                  <td
+                    colspan="4"
+                    style="text-align: center; opacity: 0.5; padding: 14px"
+                  >
+                    Belum ada pengusul ditambahkan
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-ghost"
+            onclick="closeModal('modal-pengajuan-baru')"
+          >
+            Batal</button
+          ><button class="btn btn-primary" onclick="savePengajuanBaru()">
+            💾 Simpan Pengajuan (Draft)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ISI NOMOR SURAT MODAL -->
+    <div class="modal-overlay" id="modal-nomor-surat">
+      <div class="modal narrow">
+        <div class="modal-header">
+          <div class="modal-title">🔢 Isi Nomor Surat</div>
+          <button class="modal-close" onclick="closeModal('modal-nomor-surat')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <div class="form-group">
+              <label class="form-label">Nomor Surat *</label>
+              <input
+                class="form-input"
+                id="ns-nomor"
+                placeholder="Contoh: 0456"
+              />
+              <div style="font-size: 12px; opacity: 0.6; margin-top: 4px">
+                Format lengkap otomatis:
+                B-{nomor}/Un.30/R/Kp.07.6/{bulan}/{tahun}
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tanggal Surat *</label>
+              <input class="form-input" type="date" id="ns-tanggal" />
+            </div>
+            <input type="hidden" id="ns-pengajuan-id" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-ghost"
+            onclick="closeModal('modal-nomor-surat')"
+          >
+            Batal</button
+          ><button class="btn btn-primary" onclick="saveNomorSurat()">
+            💾 Simpan Nomor
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIHAT FILE MODAL -->
+    <div class="modal-overlay" id="modal-lihat-file">
+      <div class="modal narrow">
+        <div class="modal-header">
+          <div class="modal-title">📄 File Dokumen</div>
+          <button class="modal-close" onclick="closeModal('modal-lihat-file')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div
+            id="lf-list"
+            style="display: flex; flex-direction: column; gap: 8px"
+          ></div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-ghost"
+            onclick="closeModal('modal-lihat-file')"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script>
       // ============================================================
       // SIDEBAR MOBILE
@@ -2867,6 +3126,10 @@
           "Purna Tugas",
           "/ Data Pegawai yang Telah Memasuki Masa Pensiun",
         ],
+        "otomasi-kenaikan": [
+          "Otomasi Dokumen Kenaikan",
+          "/ Surat Pengantar & SPTJM Kenaikan Pangkat",
+        ],
       };
 
       function showView(v, el) {
@@ -2892,6 +3155,7 @@
         if (v === "users") renderUserGrid();
         if (v === "pensiun") renderPensiun();
         if (v === "purnatugas") renderPurna();
+        if (v === "otomasi-kenaikan") initOtomasiKenaikan();
       }
 
       // ============================================================
@@ -4673,6 +4937,489 @@
         setTimeout(function () {
           el.remove();
         }, 4500);
+      }
+
+      // ============================================================
+      // OTOMASI DOKUMEN KENAIKAN
+      // ============================================================
+      var GOLONGAN_LIST = [
+        "I/a",
+        "I/b",
+        "I/c",
+        "I/d",
+        "II/a",
+        "II/b",
+        "II/c",
+        "II/d",
+        "III/a",
+        "III/b",
+        "III/c",
+        "III/d",
+        "IV/a",
+        "IV/b",
+        "IV/c",
+        "IV/d",
+        "IV/e",
+      ];
+      var pejabatOptions = [];
+      var pengajuanListData = [];
+      var pengusulBaruList = []; // { nip, nama, golongan_lama, golongan_baru }
+
+      var STATUS_LABEL = {
+        draft: ["Draft", "badge-draft"],
+        menunggu_nomor: ["Menunggu Generate", "badge-menunggu"],
+        selesai: ["Selesai", "badge-selesai"],
+      };
+
+      async function initOtomasiKenaikan() {
+        document.getElementById("pengajuan-body").innerHTML =
+          '<tr><td colspan="6" style="text-align:center;padding:24px;opacity:.6">Memuat...</td></tr>';
+        await loadPejabatOptions();
+        await loadPengajuanList();
+      }
+
+      async function loadPejabatOptions() {
+        var res = await db.from("v_pejabat_penandatangan").select("*");
+        if (res.error) {
+          toast(
+            "Gagal memuat pejabat penandatangan: " + res.error.message,
+            "error",
+          );
+          return;
+        }
+        pejabatOptions = res.data || [];
+        var sel = document.getElementById("pb-pejabat");
+        if (!sel) return;
+        if (pejabatOptions.length === 0) {
+          sel.innerHTML =
+            '<option value="">(belum ada pejabat terdaftar)</option>';
+          return;
+        }
+        sel.innerHTML = pejabatOptions
+          .map(function (p) {
+            return (
+              '<option value="' +
+              p.jenis +
+              '">' +
+              p.jabatan_pejabat +
+              " — " +
+              p.nama_pejabat +
+              "</option>"
+            );
+          })
+          .join("");
+      }
+
+      async function loadPengajuanList() {
+        var res = await db
+          .from("pengajuan")
+          .select(
+            "id, no_surat, tanggal_surat, status, jenis_pejabat_penandatangan, pengajuan_pengusul(nip)",
+          )
+          .order("created_at", { ascending: false });
+        if (res.error) {
+          toast("Gagal memuat daftar pengajuan: " + res.error.message, "error");
+          return;
+        }
+        pengajuanListData = res.data || [];
+        renderPengajuanTable();
+      }
+
+      function renderPengajuanTable() {
+        var body = document.getElementById("pengajuan-body");
+        if (pengajuanListData.length === 0) {
+          body.innerHTML =
+            '<tr><td colspan="6" style="text-align:center;padding:24px;opacity:.6">Belum ada pengajuan</td></tr>';
+          return;
+        }
+        var rows = "";
+        pengajuanListData.forEach(function (row) {
+          var jumlah = (row.pengajuan_pengusul || []).length;
+          var pejabat = pejabatOptions.filter(function (p) {
+            return p.jenis === row.jenis_pejabat_penandatangan;
+          })[0];
+          var pejabatLabel = pejabat
+            ? pejabat.jabatan_pejabat + " — " + pejabat.nama_pejabat
+            : "-";
+          var st = STATUS_LABEL[row.status] || [row.status, "badge-draft"];
+          var stBadge =
+            '<span class="badge ' + st[1] + '">' + st[0] + "</span>";
+
+          var aksi = "";
+          if (row.status === "draft") {
+            aksi +=
+              '<button class="btn btn-ghost btn-sm" onclick="openModalNomorSurat(\'' +
+              row.id +
+              "','" +
+              (row.tanggal_surat || "") +
+              "')\">🔢 Isi Nomor</button> ";
+          }
+          if (row.status === "menunggu_nomor") {
+            aksi +=
+              '<button class="btn btn-primary btn-sm" onclick="generateDokumenKenaikan(\'' +
+              row.id +
+              "')\">⚙️ Generate</button> ";
+          }
+          if (row.status === "selesai") {
+            aksi +=
+              '<button class="btn btn-ghost btn-sm" onclick="lihatFileDokumen(\'' +
+              row.id +
+              "')\">📄 Lihat File</button> ";
+            aksi +=
+              '<button class="btn btn-ghost btn-sm" onclick="generateDokumenKenaikan(\'' +
+              row.id +
+              "')\">🔄 Generate Ulang</button> ";
+          }
+          aksi +=
+            '<button class="btn btn-danger btn-sm" onclick="hapusPengajuan(\'' +
+            row.id +
+            "')\">🗑️</button>";
+
+          rows +=
+            "<tr><td>" +
+            (row.tanggal_surat || "-") +
+            "</td><td>" +
+            (row.no_surat || "-") +
+            "</td><td>" +
+            jumlah +
+            " orang</td><td>" +
+            pejabatLabel +
+            "</td><td>" +
+            stBadge +
+            '</td><td><div style="display:flex;gap:6px;flex-wrap:wrap">' +
+            aksi +
+            "</div></td></tr>";
+        });
+        body.innerHTML = rows;
+      }
+
+      // -------------------- MODAL: BUAT PENGAJUAN --------------------
+      function openModalPengajuanBaru() {
+        pengusulBaruList = [];
+        renderPengusulBaruTable();
+        document.getElementById("pb-cari-pengusul").value = "";
+        document.getElementById("pb-suggest").classList.remove("open");
+        document.getElementById("pb-tanggal").value = new Date()
+          .toISOString()
+          .slice(0, 10);
+        openModal("modal-pengajuan-baru");
+      }
+
+      function filterPengusulSuggest() {
+        var q = document
+          .getElementById("pb-cari-pengusul")
+          .value.trim()
+          .toLowerCase();
+        var box = document.getElementById("pb-suggest");
+        if (!q) {
+          box.classList.remove("open");
+          box.innerHTML = "";
+          return;
+        }
+        var already = pengusulBaruList.map(function (p) {
+          return p.nip;
+        });
+        var matches = pegawaiData
+          .filter(function (p) {
+            if (already.indexOf(p.nip) !== -1) return false;
+            return (
+              p.nama.toLowerCase().indexOf(q) !== -1 ||
+              (p.nip || "").indexOf(q) !== -1
+            );
+          })
+          .slice(0, 8);
+        if (matches.length === 0) {
+          box.innerHTML =
+            '<div class="pengusul-suggest-item" style="opacity:.6">Tidak ditemukan</div>';
+          box.classList.add("open");
+          return;
+        }
+        box.innerHTML = matches
+          .map(function (p) {
+            return (
+              '<div class="pengusul-suggest-item" onclick="pilihPengusulBaru(\'' +
+              p.nip +
+              "')\">" +
+              "<b>" +
+              p.nama +
+              '</b><br><span style="opacity:.6;font-size:11px">' +
+              p.nip +
+              " — " +
+              (p.golongan || "-") +
+              "</span></div>"
+            );
+          })
+          .join("");
+        box.classList.add("open");
+      }
+
+      function pilihPengusulBaru(nip) {
+        var p = pegawaiData.filter(function (x) {
+          return x.nip === nip;
+        })[0];
+        if (!p) return;
+        pengusulBaruList.push({
+          nip: p.nip,
+          nama: p.nama,
+          golongan_lama: p.golongan,
+          golongan_baru: p.golongan,
+        });
+        document.getElementById("pb-cari-pengusul").value = "";
+        document.getElementById("pb-suggest").classList.remove("open");
+        document.getElementById("pb-suggest").innerHTML = "";
+        renderPengusulBaruTable();
+      }
+
+      function hapusPengusulBaru(nip) {
+        pengusulBaruList = pengusulBaruList.filter(function (p) {
+          return p.nip !== nip;
+        });
+        renderPengusulBaruTable();
+      }
+
+      function ubahGolonganBaru(nip, val) {
+        var p = pengusulBaruList.filter(function (x) {
+          return x.nip === nip;
+        })[0];
+        if (p) p.golongan_baru = val;
+      }
+
+      function renderPengusulBaruTable() {
+        var body = document.getElementById("pb-pengusul-body");
+        if (pengusulBaruList.length === 0) {
+          body.innerHTML =
+            '<tr><td colspan="4" style="text-align:center;opacity:.5;padding:14px">Belum ada pengusul ditambahkan</td></tr>';
+          return;
+        }
+        body.innerHTML = pengusulBaruList
+          .map(function (p) {
+            var options = GOLONGAN_LIST.map(function (g) {
+              return (
+                '<option value="' +
+                g +
+                '"' +
+                (g === p.golongan_baru ? " selected" : "") +
+                ">" +
+                g +
+                "</option>"
+              );
+            }).join("");
+            return (
+              "<tr><td>" +
+              p.nama +
+              '<br><span style="opacity:.6;font-size:11px">' +
+              p.nip +
+              "</span></td><td>" +
+              (p.golongan_lama || "-") +
+              "</td><td><select onchange=\"ubahGolonganBaru('" +
+              p.nip +
+              "', this.value)\">" +
+              options +
+              '</select></td><td><button class="btn btn-ghost btn-sm" onclick="hapusPengusulBaru(\'' +
+              p.nip +
+              "')\">✕</button></td></tr>"
+            );
+          })
+          .join("");
+      }
+
+      async function savePengajuanBaru() {
+        var tanggal = document.getElementById("pb-tanggal").value;
+        var jenisPejabat = document.getElementById("pb-pejabat").value;
+        if (!tanggal) {
+          toast("Tanggal surat wajib diisi", "error");
+          return;
+        }
+        if (!jenisPejabat) {
+          toast("Pejabat penandatangan wajib dipilih", "error");
+          return;
+        }
+        if (pengusulBaruList.length === 0) {
+          toast("Tambahkan minimal 1 pengusul", "error");
+          return;
+        }
+
+        showLoading("Menyimpan pengajuan...");
+        try {
+          var paketRes = await db
+            .from("paket_kenaikan")
+            .select("id")
+            .eq("kode", "kenaikan_pangkat")
+            .single();
+          if (paketRes.error) throw new Error(paketRes.error.message);
+
+          var pengajuanRes = await db
+            .from("pengajuan")
+            .insert({
+              paket_id: paketRes.data.id,
+              status: "draft",
+              tanggal_surat: tanggal,
+              jenis_pejabat_penandatangan: jenisPejabat,
+            })
+            .select()
+            .single();
+          if (pengajuanRes.error) throw new Error(pengajuanRes.error.message);
+          var pengajuanId = pengajuanRes.data.id;
+
+          var pengusulRows = pengusulBaruList.map(function (p, i) {
+            return { pengajuan_id: pengajuanId, nip: p.nip, urutan: i + 1 };
+          });
+          var insPengusul = await db
+            .from("pengajuan_pengusul")
+            .insert(pengusulRows);
+          if (insPengusul.error) throw new Error(insPengusul.error.message);
+
+          var fieldRows = pengusulBaruList.map(function (p) {
+            return {
+              pengajuan_id: pengajuanId,
+              nip: p.nip,
+              key: "golongan_baru",
+              value: p.golongan_baru,
+            };
+          });
+          var insField = await db
+            .from("pengajuan_field_tambahan")
+            .insert(fieldRows);
+          if (insField.error) throw new Error(insField.error.message);
+
+          hideLoading();
+          toast("Pengajuan berhasil disimpan sebagai draft", "success");
+          closeModal("modal-pengajuan-baru");
+          await loadPengajuanList();
+        } catch (err) {
+          hideLoading();
+          toast("Gagal menyimpan pengajuan: " + err.message, "error");
+        }
+      }
+
+      // -------------------- MODAL: ISI NOMOR SURAT --------------------
+      function openModalNomorSurat(pengajuanId, tanggalExisting) {
+        document.getElementById("ns-pengajuan-id").value = pengajuanId;
+        document.getElementById("ns-nomor").value = "";
+        document.getElementById("ns-tanggal").value =
+          tanggalExisting || new Date().toISOString().slice(0, 10);
+        openModal("modal-nomor-surat");
+      }
+
+      async function saveNomorSurat() {
+        var id = document.getElementById("ns-pengajuan-id").value;
+        var nomor = document.getElementById("ns-nomor").value.trim();
+        var tanggal = document.getElementById("ns-tanggal").value;
+        if (!nomor) {
+          toast("Nomor surat wajib diisi", "error");
+          return;
+        }
+        if (!tanggal) {
+          toast("Tanggal surat wajib diisi", "error");
+          return;
+        }
+        showLoading("Menyimpan nomor surat...");
+        var res = await db
+          .from("pengajuan")
+          .update({
+            no_surat: nomor,
+            tanggal_surat: tanggal,
+            status: "menunggu_nomor",
+          })
+          .eq("id", id);
+        hideLoading();
+        if (res.error) {
+          toast("Gagal menyimpan nomor surat: " + res.error.message, "error");
+          return;
+        }
+        toast("Nomor surat tersimpan, siap digenerate", "success");
+        closeModal("modal-nomor-surat");
+        await loadPengajuanList();
+      }
+
+      // -------------------- GENERATE DOKUMEN --------------------
+      async function generateDokumenKenaikan(pengajuanId) {
+        showLoading("Menggenerate dokumen...");
+        try {
+          var res = await db.functions.invoke("generate-dokumen-kenaikan", {
+            body: { pengajuan_id: pengajuanId },
+          });
+          hideLoading();
+          if (res.error) {
+            throw new Error(
+              res.error.message || "Gagal memanggil fungsi generate",
+            );
+          }
+          if (res.data && res.data.success === false) {
+            throw new Error(res.data.error || "Gagal generate dokumen");
+          }
+          toast("Dokumen berhasil digenerate", "success");
+          await loadPengajuanList();
+        } catch (err) {
+          hideLoading();
+          toast("Gagal generate dokumen: " + err.message, "error");
+        }
+      }
+
+      // -------------------- LIHAT FILE --------------------
+      async function lihatFileDokumen(pengajuanId) {
+        showLoading("Memuat daftar file...");
+        var res = await db
+          .from("pengajuan_dokumen")
+          .select("id, nip, file_path, jenis_dokumen(nama)")
+          .eq("pengajuan_id", pengajuanId)
+          .order("created_at", { ascending: true });
+        hideLoading();
+        if (res.error) {
+          toast("Gagal memuat file: " + res.error.message, "error");
+          return;
+        }
+        var list = document.getElementById("lf-list");
+        if (!res.data || res.data.length === 0) {
+          list.innerHTML =
+            '<div style="opacity:.6;text-align:center;padding:14px">Belum ada file</div>';
+        } else {
+          list.innerHTML = res.data
+            .map(function (d) {
+              var label =
+                (d.jenis_dokumen ? d.jenis_dokumen.nama : "Dokumen") +
+                (d.nip ? " — " + d.nip : "");
+              return (
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:8px">' +
+                "<span>" +
+                label +
+                '</span><button class="btn btn-primary btn-sm" onclick="unduhFileDokumen(\'' +
+                d.file_path +
+                "')\">⬇️ Unduh</button></div>"
+              );
+            })
+            .join("");
+        }
+        openModal("modal-lihat-file");
+      }
+
+      async function unduhFileDokumen(filePath) {
+        var res = await db.storage
+          .from("dokumen-kenaikan")
+          .createSignedUrl(filePath, 60);
+        if (res.error || !res.data) {
+          toast(
+            "Gagal membuat link unduh: " + (res.error ? res.error.message : ""),
+            "error",
+          );
+          return;
+        }
+        window.open(res.data.signedUrl, "_blank");
+      }
+
+      // -------------------- HAPUS PENGAJUAN --------------------
+      async function hapusPengajuan(pengajuanId) {
+        if (!confirm("Hapus pengajuan ini beserta seluruh data pengusulnya?"))
+          return;
+        showLoading("Menghapus...");
+        var res = await db.from("pengajuan").delete().eq("id", pengajuanId);
+        hideLoading();
+        if (res.error) {
+          toast("Gagal menghapus: " + res.error.message, "error");
+          return;
+        }
+        toast("Pengajuan dihapus", "success");
+        await loadPengajuanList();
       }
 
       // ============================================================
