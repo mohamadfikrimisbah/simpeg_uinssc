@@ -680,9 +680,10 @@
         right: 0;
         max-height: 220px;
         overflow-y: auto;
-        background: #0d2b22;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #ffffff;
+        border: 1px solid #b2dece;
         border-radius: 10px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
         z-index: 40;
         display: none;
       }
@@ -693,10 +694,11 @@
         padding: 9px 14px;
         cursor: pointer;
         font-size: 13px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #054b38;
+        border-bottom: 1px solid #eef6f1;
       }
       .pengusul-suggest-item:hover {
-        background: rgba(22, 208, 134, 0.1);
+        background: rgba(18, 170, 110, 0.08);
       }
       .pengusul-suggest-item:last-child {
         border-bottom: none;
@@ -711,15 +713,20 @@
       .pengusul-row-table td {
         padding: 8px 10px;
         text-align: left;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid #eef6f1;
+        color: #054b38;
       }
       .pengusul-row-table select {
-        background: rgba(255, 255, 255, 0.06);
-        color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: #ffffff;
+        color: #054b38;
+        border: 1px solid #b2dece;
         border-radius: 6px;
         padding: 4px 6px;
         font-size: 12px;
+      }
+      .pengusul-row-table select option {
+        color: #054b38;
+        background: #ffffff;
       }
 
       /* PAGINATION */
@@ -1986,6 +1993,22 @@
                   />
                 </div>
                 <div class="form-group">
+                  <label class="form-label">NIDN</label
+                  ><input
+                    class="form-input"
+                    id="f-nidn"
+                    placeholder="Opsional, khusus Dosen"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">NUPTK</label
+                  ><input
+                    class="form-input"
+                    id="f-nuptk"
+                    placeholder="Opsional"
+                  />
+                </div>
+                <div class="form-group">
                   <label class="form-label">Nama Lengkap *</label
                   ><input
                     class="form-input"
@@ -2158,8 +2181,12 @@
                 💡 <strong>Petunjuk Import:</strong> Download template Excel
                 terlebih dahulu, isi data sesuai format, lalu upload kembali.
                 Sistem mendukung file <strong>.xlsx</strong> dan
-                <strong>.csv</strong>. Data yang sudah ada tidak akan dihapus —
-                data baru akan ditambahkan. NIP duplikat akan dilewati.
+                <strong>.csv</strong>. NIP yang <strong>belum ada</strong>
+                akan ditambahkan sebagai data baru. NIP yang
+                <strong>sudah ada</strong> akan diupdate — tapi
+                <strong>hanya kolom yang diisi</strong> di file yang akan
+                menimpa data lama; kolom yang dikosongkan tidak akan menghapus
+                data yang sudah tersimpan.
               </div>
 
               <div
@@ -2469,6 +2496,18 @@
                 readonly
                 style="opacity: 0.6"
               />
+            </div>
+            <div class="form-group">
+              <label class="form-label">NIDN</label
+              ><input
+                class="form-input"
+                id="e-nidn"
+                placeholder="Opsional, khusus Dosen"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">NUPTK</label
+              ><input class="form-input" id="e-nuptk" placeholder="Opsional" />
             </div>
             <div class="form-group">
               <label class="form-label">Nama</label
@@ -3192,6 +3231,8 @@
         return {
           id: r.id,
           nip: r.nip,
+          nidn: r.nidn || null,
+          nuptk: r.nuptk || null,
           nama: r.nama,
           gender: r.gender,
           tglLahir: r.tgl_lahir,
@@ -3215,6 +3256,8 @@
       function mapToDb(p) {
         return {
           nip: p.nip,
+          nidn: p.nidn || null,
+          nuptk: p.nuptk || null,
           nama: p.nama,
           gender: p.gender,
           tgl_lahir: p.tglLahir || null,
@@ -3830,6 +3873,8 @@
           p.jenis +
           "</span>";
         var age = new Date().getFullYear() - new Date(p.tglLahir).getFullYear();
+        var mk = hitungMasaKerja(p.nip);
+        var mkText = mk ? mk.tahun + " Tahun " + mk.bulan + " Bulan" : "-";
         function di(label, value) {
           return (
             '<div class="detail-item"><div class="detail-label">' +
@@ -3840,6 +3885,9 @@
           );
         }
         document.getElementById("d-detail").innerHTML =
+          di("NIDN", p.nidn || "-") +
+          di("NUPTK", p.nuptk || "-") +
+          di("Masa Kerja", mkText) +
           di("Tanggal Lahir", fd(p.tglLahir) + " (" + age + " th)") +
           di("Gender", p.gender) +
           di("Status", p.status) +
@@ -3870,6 +3918,26 @@
           ? ""
           : "none";
         openModal("modal-detail");
+      }
+
+      // NIP 18 digit: posisi 9-12 = tahun masuk, posisi 13-14 = bulan masuk
+      // Contoh: 199403012025051001 -> tahun masuk 2025, bulan masuk 05
+      function hitungMasaKerja(nip) {
+        if (!nip || nip.length < 14) return null;
+        var tahunMasuk = parseInt(nip.substr(8, 4), 10);
+        var bulanMasuk = parseInt(nip.substr(12, 2), 10);
+        if (!tahunMasuk || !bulanMasuk || bulanMasuk < 1 || bulanMasuk > 12)
+          return null;
+        var mulai = new Date(tahunMasuk, bulanMasuk - 1, 1);
+        var now = new Date();
+        var totalBulan =
+          (now.getFullYear() - mulai.getFullYear()) * 12 +
+          (now.getMonth() - mulai.getMonth());
+        if (totalBulan < 0) return null;
+        return {
+          tahun: Math.floor(totalBulan / 12),
+          bulan: totalBulan % 12,
+        };
       }
 
       function fd(d) {
@@ -3910,6 +3978,8 @@
         selectedNIP = nip;
         var fv = {
           "e-nip": p.nip,
+          "e-nidn": p.nidn || "",
+          "e-nuptk": p.nuptk || "",
           "e-nama": p.nama,
           "e-gender": p.gender,
           "e-tgl-lahir": p.tglLahir || "",
@@ -3939,6 +4009,8 @@
         }
         var p = {
           nip: selectedNIP,
+          nidn: val("e-nidn") || null,
+          nuptk: val("e-nuptk") || null,
           nama: val("e-nama"),
           gender: val("e-gender"),
           tglLahir: val("e-tgl-lahir"),
@@ -4046,6 +4118,8 @@
         }
         var p = {
           nip: nip,
+          nidn: val("f-nidn") || null,
+          nuptk: val("f-nuptk") || null,
           nama: nama,
           gender: val("f-gender"),
           tglLahir: val("f-tgl-lahir"),
@@ -4091,6 +4165,8 @@
       function clearForm() {
         [
           "f-nip",
+          "f-nidn",
+          "f-nuptk",
           "f-nama",
           "f-gender",
           "f-tgl-lahir",
@@ -4120,6 +4196,8 @@
       var COL_MAP = {
         NIP: "nip",
         "NIP *": "nip",
+        NIDN: "nidn",
+        NUPTK: "nuptk",
         Nama: "nama",
         "Nama *": "nama",
         Gender: "gender",
@@ -4229,21 +4307,13 @@
           }
           obj.kelasJab = parseInt(obj.kelasJab) || null;
           obj.tahunLulus = parseInt(obj.tahunLulus) || null;
-          if (
-            pegawaiData.find(function (p) {
-              return p.nip === obj.nip;
-            })
-          ) {
-            errors.push(
-              "Baris " +
-                (ri + 1) +
-                ": NIP " +
-                obj.nip +
-                " sudah ada (dilewati)",
-            );
-            return;
-          }
-          pendingImport.push(obj);
+          var existing = pegawaiData.find(function (p) {
+            return p.nip === obj.nip;
+          });
+          pendingImport.push({
+            mode: existing ? "update" : "insert",
+            data: obj,
+          });
         });
 
         if (pendingImport.length === 0 && errors.length > 0) {
@@ -4255,13 +4325,22 @@
         }
 
         document.getElementById("preview-section").style.display = "";
+        var jumlahBaru = pendingImport.filter(function (r) {
+          return r.mode === "insert";
+        }).length;
+        var jumlahUpdate = pendingImport.filter(function (r) {
+          return r.mode === "update";
+        }).length;
         document.getElementById("preview-count").textContent =
-          pendingImport.length +
-          " baris valid - " +
+          jumlahBaru +
+          " baris baru, " +
+          jumlahUpdate +
+          " baris update - " +
           errors.length +
           " baris dilewati";
 
         var pcols = [
+          "Mode",
           "NIP",
           "Nama",
           "Gender",
@@ -4279,9 +4358,17 @@
 
         var pbody = pendingImport
           .slice(0, 20)
-          .map(function (p) {
+          .map(function (r) {
+            var p = r.data;
+            var modeBadge =
+              r.mode === "insert"
+                ? '<span class="badge" style="background:rgba(22,208,134,.15);color:#16d086">Baru</span>'
+                : '<span class="badge" style="background:rgba(245,158,11,.15);color:#f59e0b">Update</span>';
             return (
               "<tr>" +
+              "<td>" +
+              modeBadge +
+              "</td>" +
               '<td class="mono">' +
               (p.nip || "-") +
               "</td>" +
@@ -4312,7 +4399,7 @@
           .join("");
         if (pendingImport.length > 20)
           pbody +=
-            '<tr><td colspan="8" style="text-align:center;color:var(--text3);font-size:12px">...dan ' +
+            '<tr><td colspan="9" style="text-align:center;color:var(--text3);font-size:12px">...dan ' +
             (pendingImport.length - 20) +
             " baris lainnya</td></tr>";
         document.getElementById("preview-body").innerHTML = pbody;
@@ -4328,35 +4415,80 @@
         else hideImportResult();
       }
 
+      // Bangun payload UPDATE yang HANYA berisi field yang benar-benar terisi
+      // di file import -- field yang kosong di file TIDAK dikirim, sehingga
+      // data lama di kolom itu tidak ikut tertimpa/hilang.
+      // status_aktif sengaja selalu dikecualikan dari update massal supaya
+      // pegawai yang sudah dinonaktifkan manual tidak ikut teraktifkan lagi.
+      function buildUpdatePayload(obj) {
+        var full = mapToDb(obj);
+        var partial = {};
+        Object.keys(full).forEach(function (dbKey) {
+          if (dbKey === "nip" || dbKey === "status_aktif") return;
+          var v = full[dbKey];
+          if (v !== null && v !== "" && v !== undefined) {
+            partial[dbKey] = v;
+          }
+        });
+        return partial;
+      }
+
       async function confirmImport() {
         if (pendingImport.length === 0) {
           toast("Tidak ada data untuk diimport", "error");
           return;
         }
+        var toInsert = pendingImport.filter(function (r) {
+          return r.mode === "insert";
+        });
+        var toUpdate = pendingImport.filter(function (r) {
+          return r.mode === "update";
+        });
+
         showLoading(
           "Mengimport " + pendingImport.length + " data ke database...",
         );
         try {
-          var dbRows = pendingImport.map(mapToDb);
+          var insertedCount = 0;
+          var dbRows = toInsert.map(function (r) {
+            return mapToDb(r.data);
+          });
           var BATCH = 100;
-          var inserted = 0;
           for (var i = 0; i < dbRows.length; i += BATCH) {
             var batch = dbRows.slice(i, i + BATCH);
             var res = await db.from("pegawai").insert(batch);
             if (res.error) throw res.error;
-            inserted += batch.length;
+            insertedCount += batch.length;
             document.getElementById("loading-text").textContent =
-              "Mengimport... " + inserted + "/" + dbRows.length;
+              "Menambah data baru... " + insertedCount + "/" + dbRows.length;
           }
+
+          var updatedCount = 0;
+          for (var j = 0; j < toUpdate.length; j++) {
+            var row = toUpdate[j];
+            var payload = buildUpdatePayload(row.data);
+            if (Object.keys(payload).length === 0) continue; // tidak ada field terisi untuk diupdate
+            var ures = await db
+              .from("pegawai")
+              .update(payload)
+              .eq("nip", row.data.nip);
+            if (ures.error) throw ures.error;
+            updatedCount++;
+            document.getElementById("loading-text").textContent =
+              "Mengupdate data... " + updatedCount + "/" + toUpdate.length;
+          }
+
           await db.from("import_log").insert({
             user_id: currentUser.id,
-            jumlah: inserted,
+            jumlah: insertedCount + updatedCount,
             filename: "import",
           });
           await loadPegawai();
           importLog.unshift({
             time: new Date().toLocaleString("id-ID"),
-            count: inserted,
+            count: insertedCount + updatedCount,
+            inserted: insertedCount,
+            updated: updatedCount,
           });
           renderImportLog();
           cancelImport();
@@ -4367,9 +4499,16 @@
           renderPensiun();
           showImportResult(
             "success",
-            "Berhasil mengimport " + inserted + " data pegawai ke database!",
+            "Berhasil: " +
+              insertedCount +
+              " data baru ditambahkan, " +
+              updatedCount +
+              " data diupdate!",
           );
-          toast(inserted + " pegawai berhasil diimport!", "success");
+          toast(
+            insertedCount + " data baru, " + updatedCount + " data diupdate!",
+            "success",
+          );
         } catch (e) {
           toast("Gagal import: " + e.message, "error");
         } finally {
@@ -4401,12 +4540,16 @@
         }
         el.innerHTML = importLog
           .map(function (l) {
+            var rincian =
+              l.inserted !== undefined
+                ? l.inserted + " baru, " + l.updated + " update"
+                : l.count + " pegawai berhasil diimport";
             return (
               '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">' +
               '<div style="width:36px;height:36px;background:rgba(16,185,129,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">&#128194;</div>' +
               '<div><div style="font-size:13px;font-weight:600">' +
-              l.count +
-              " pegawai berhasil diimport</div>" +
+              rincian +
+              "</div>" +
               '<div style="font-size:12px;color:var(--text3)">' +
               l.time +
               "</div></div>" +
@@ -4429,6 +4572,8 @@
         var wb = XLSX.utils.book_new();
         var headers = [
           "NIP *",
+          "NIDN",
+          "NUPTK",
           "Nama *",
           "Gender *",
           "Tanggal Lahir *",
@@ -4449,6 +4594,8 @@
         var samples = [
           [
             "197001011990031001",
+            "0001017001",
+            "1234567890123456",
             "Dr. Budi Santoso, M.Pd",
             "Laki-laki",
             "1970-01-01",
@@ -4468,6 +4615,8 @@
           ],
           [
             "199205152020011009",
+            "",
+            "",
             "Fajar Nugroho, S.AP",
             "Laki-laki",
             "1992-05-15",
@@ -4488,10 +4637,11 @@
         ];
         var ws1data = [headers]
           .concat(samples)
-          .concat(Array(48).fill(new Array(17).fill("")));
+          .concat(Array(48).fill(new Array(19).fill("")));
         var ws1 = XLSX.utils.aoa_to_sheet(ws1data);
         ws1["!cols"] = [
-          22, 32, 14, 16, 15, 16, 18, 18, 28, 16, 14, 26, 15, 18, 22, 24, 14,
+          22, 16, 20, 32, 14, 16, 15, 16, 18, 18, 28, 16, 14, 26, 15, 18, 22,
+          24, 14,
         ].map(function (w) {
           return { wch: w };
         });
@@ -4888,10 +5038,14 @@
       function exportData() {
         var headers = [
           "NIP",
+          "NIDN",
+          "NUPTK",
           "Nama",
           "Gender",
           "Tgl Lahir",
           "Status",
+          "Masa Kerja (Tahun)",
+          "Masa Kerja (Bulan)",
           "TMT Pensiun",
           "Golongan",
           "TMT Golongan",
@@ -4906,12 +5060,17 @@
           "Nomor Almari",
         ];
         var rows = pegawaiData.map(function (p) {
+          var mk = hitungMasaKerja(p.nip);
           return [
             p.nip,
+            p.nidn || "",
+            p.nuptk || "",
             p.nama,
             p.gender,
             p.tglLahir,
             p.status,
+            mk ? mk.tahun : "",
+            mk ? mk.bulan : "",
             p.pensiun,
             p.golongan,
             p.tmtGol,
