@@ -2327,7 +2327,9 @@
                     <th>Unit Kerja</th>
                     <th>Jenis</th>
                     <th>Pendidikan</th>
-                    <th>TMT Pensiun</th>
+                    <th>Status Purna</th>
+                    <th>Tanggal Purna</th>
+                    <th class="admin-only">Aksi</th>
                   </tr>
                 </thead>
                 <tbody id="purna-body"></tbody>
@@ -2465,6 +2467,13 @@
             onclick="hapusPegawai()"
           >
             🗑️ Hapus
+          </button>
+          <button
+            class="btn btn-warning btn-sm admin-only"
+            id="btn-purna"
+            onclick="openPurnaModal(selectedNIP)"
+          >
+            🎓 Purna Tugas
           </button>
           <button
             class="btn btn-primary admin-only"
@@ -2949,6 +2958,60 @@
       </div>
     </div>
 
+    <!-- PINDAH KE PURNA TUGAS MODAL -->
+    <div class="modal-overlay" id="modal-purna">
+      <div class="modal narrow">
+        <div class="modal-header">
+          <div class="modal-title">🎓 Pindahkan ke Purna Tugas</div>
+          <button class="modal-close" onclick="closeModal('modal-purna')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div
+            style="
+              font-size: 13px;
+              color: #2d5c47;
+              margin-bottom: 16px;
+              background: #f0faf5;
+              border: 1px solid #b2dece;
+              border-radius: 10px;
+              padding: 12px 14px;
+              line-height: 1.6;
+            "
+          >
+            Pegawai <strong id="purna-nama-preview"></strong> akan dipindahkan
+            dari Data Pegawai aktif ke menu Purna Tugas. Data tidak dihapus,
+            hanya disembunyikan dari perhitungan dashboard.
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <div class="form-group">
+              <label class="form-label">Alasan Purna Tugas *</label>
+              <select class="form-select" id="purna-status">
+                <option value="BUP">BUP (Batas Usia Pensiun)</option>
+                <option value="Meninggal">Meninggal Dunia</option>
+                <option value="Pensiun Dini">Pensiun Dini</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" id="purna-tanggal-label"
+                >Tanggal Purna Tugas *</label
+              >
+              <input class="form-input" id="purna-tanggal" type="date" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeModal('modal-purna')">
+            Batal
+          </button>
+          <button class="btn btn-warning" onclick="konfirmasiPindahPurna()">
+            🎓 Pindahkan Sekarang
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script>
       // ============================================================
       // SIDEBAR MOBILE
@@ -3250,6 +3313,8 @@
           tugasTambahan: r.tugas_tambahan || null,
           nomorAlmari: r.nomor_almari || null,
           statusAktif: r.status_aktif !== false,
+          statusPurna: r.status_purna || null,
+          tanggalPurna: r.tanggal_purna || null,
         };
       }
 
@@ -3275,6 +3340,8 @@
           tugas_tambahan: p.tugasTambahan || null,
           nomor_almari: p.nomorAlmari || null,
           status_aktif: p.statusAktif !== false,
+          status_purna: p.statusPurna || null,
+          tanggal_purna: p.tanggalPurna || null,
         };
       }
 
@@ -3766,6 +3833,9 @@
               '<button class="btn btn-ghost btn-sm" onclick="openEdit(\'' +
               p.nip +
               "')\">&#9999;&#65039;</button>" +
+              '<button class="btn btn-warning btn-sm" title="Pindahkan ke Purna Tugas" onclick="openPurnaModal(\'' +
+              p.nip +
+              "')\">&#127891;</button>" +
               '<button class="btn btn-danger btn-sm" onclick="confirmDelete(\'' +
               p.nip +
               "')\">&#128465;&#65039;</button>" +
@@ -3912,6 +3982,9 @@
 
         var isAdmin = currentProfile && currentProfile.role === "admin";
         document.getElementById("btn-hapus").style.display = isAdmin
+          ? ""
+          : "none";
+        document.getElementById("btn-purna").style.display = isAdmin
           ? ""
           : "none";
         document.getElementById("btn-edit").style.display = isAdmin
@@ -4090,6 +4163,136 @@
           toast("Data pegawai berhasil dihapus.", "info");
         } catch (e) {
           toast("Gagal hapus: " + e.message, "error");
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // ============================================================
+      // PINDAH KE PURNA TUGAS (BUP / Meninggal / Pensiun Dini)
+      // ============================================================
+      var selectedPurnaNIP = null;
+
+      function openPurnaModal(nip) {
+        var p = pegawaiData.find(function (x) {
+          return x.nip === nip;
+        });
+        if (!p) return;
+        selectedPurnaNIP = nip;
+        document.getElementById("purna-nama-preview").textContent = p.nama;
+        document.getElementById("purna-status").value = "BUP";
+        var todayISO = new Date().toISOString().slice(0, 10);
+        document.getElementById("purna-tanggal").value = p.pensiun || todayISO;
+        updatePurnaTanggalLabel();
+        closeModal("modal-detail");
+        openModal("modal-purna");
+      }
+
+      // Label tanggal menyesuaikan alasan yang dipilih
+      document.addEventListener("DOMContentLoaded", function () {
+        var sel = document.getElementById("purna-status");
+        if (sel) sel.addEventListener("change", updatePurnaTanggalLabel);
+      });
+
+      function updatePurnaTanggalLabel() {
+        var alasan = document.getElementById("purna-status").value;
+        var label = document.getElementById("purna-tanggal-label");
+        if (alasan === "Meninggal") {
+          label.textContent = "Tanggal Meninggal Dunia *";
+        } else if (alasan === "Pensiun Dini") {
+          label.textContent = "Tanggal Pensiun Dini *";
+        } else {
+          label.textContent = "Tanggal BUP (TMT Pensiun) *";
+        }
+      }
+
+      async function konfirmasiPindahPurna() {
+        if (!selectedPurnaNIP) return;
+        var p = pegawaiData.find(function (x) {
+          return x.nip === selectedPurnaNIP;
+        });
+        if (!p) return;
+        var alasan = document.getElementById("purna-status").value;
+        var tanggal = document.getElementById("purna-tanggal").value;
+        if (!tanggal) {
+          toast("Tanggal wajib diisi!", "error");
+          return;
+        }
+        if (
+          !confirm(
+            "Pindahkan " +
+              p.nama +
+              " ke Purna Tugas dengan status " +
+              alasan +
+              "?",
+          )
+        )
+          return;
+
+        showLoading("Memindahkan ke Purna Tugas...");
+        try {
+          var payload = {
+            status_aktif: false,
+            status_purna: alasan,
+            tanggal_purna: tanggal,
+          };
+          var res = await db
+            .from("pegawai")
+            .update(payload)
+            .eq("nip", selectedPurnaNIP);
+          if (res.error) throw res.error;
+
+          await loadPegawai();
+          closeModal("modal-purna");
+          updateStats();
+          renderCharts();
+          filterTable();
+          renderPensiun();
+          if (
+            document
+              .getElementById("view-purnatugas")
+              .classList.contains("active")
+          ) {
+            filterPurna();
+          }
+          toast(
+            p.nama + " berhasil dipindahkan ke Purna Tugas (" + alasan + ").",
+            "success",
+          );
+        } catch (e) {
+          toast("Gagal memindahkan: " + e.message, "error");
+        } finally {
+          hideLoading();
+        }
+      }
+
+      async function kembalikanKeAktif(nip) {
+        var p = purnaData.find(function (x) {
+          return x.nip === nip;
+        });
+        if (!p) return;
+        if (!confirm("Kembalikan " + p.nama + " ke daftar Pegawai Aktif?"))
+          return;
+        showLoading("Mengembalikan ke aktif...");
+        try {
+          var res = await db
+            .from("pegawai")
+            .update({
+              status_aktif: true,
+              status_purna: null,
+              tanggal_purna: null,
+            })
+            .eq("nip", nip);
+          if (res.error) throw res.error;
+          await loadPegawai();
+          updateStats();
+          renderCharts();
+          filterTable();
+          renderPensiun();
+          filterPurna();
+          toast(p.nama + " berhasil dikembalikan ke Pegawai Aktif.", "success");
+        } catch (e) {
+          toast("Gagal mengembalikan: " + e.message, "error");
         } finally {
           hideLoading();
         }
@@ -4418,13 +4621,21 @@
       // Bangun payload UPDATE yang HANYA berisi field yang benar-benar terisi
       // di file import -- field yang kosong di file TIDAK dikirim, sehingga
       // data lama di kolom itu tidak ikut tertimpa/hilang.
-      // status_aktif sengaja selalu dikecualikan dari update massal supaya
-      // pegawai yang sudah dinonaktifkan manual tidak ikut teraktifkan lagi.
+      // status_aktif, status_purna, tanggal_purna sengaja selalu dikecualikan
+      // dari update massal supaya pegawai yang sudah dipindahkan ke Purna
+      // Tugas (BUP/Meninggal/Pensiun Dini) tidak ikut teraktifkan lagi oleh
+      // import data.
       function buildUpdatePayload(obj) {
         var full = mapToDb(obj);
         var partial = {};
         Object.keys(full).forEach(function (dbKey) {
-          if (dbKey === "nip" || dbKey === "status_aktif") return;
+          if (
+            dbKey === "nip" ||
+            dbKey === "status_aktif" ||
+            dbKey === "status_purna" ||
+            dbKey === "tanggal_purna"
+          )
+            return;
           var v = full[dbKey];
           if (v !== null && v !== "" && v !== undefined) {
             partial[dbKey] = v;
@@ -4698,6 +4909,7 @@
           Math.min(start + PAGE_SIZE, total) +
           " dari " +
           total;
+        var isAdmin = currentProfile && currentProfile.role === "admin";
         var rows = "";
         slice.forEach(function (p) {
           var gBadge =
@@ -4710,6 +4922,25 @@
             '">' +
             p.jenis +
             "</span>";
+          var statusLabel = p.statusPurna || "BUP";
+          var statusStyle =
+            statusLabel === "Meninggal"
+              ? "background:rgba(100,116,139,.15);color:#475569"
+              : statusLabel === "Pensiun Dini"
+                ? "background:rgba(245,158,11,.15);color:#d97706"
+                : "background:rgba(18,170,110,.12);color:#0d8a58";
+          var statusBadge =
+            '<span class="badge" style="' +
+            statusStyle +
+            '">' +
+            statusLabel +
+            "</span>";
+          var tglPurna = p.tanggalPurna || p.pensiun || null;
+          var aksiTd = isAdmin
+            ? '<td onclick="event.stopPropagation()"><button class="btn btn-ghost btn-sm" title="Kembalikan ke Aktif" onclick="kembalikanKeAktif(\'' +
+              p.nip +
+              "')\">&#8617; Aktifkan</button></td>"
+            : "<td></td>";
           rows +=
             "<tr>" +
             '<td class="mono">' +
@@ -4736,14 +4967,18 @@
             '<td><span class="badge" style="background:rgba(99,102,241,.15);color:#6366f1">' +
             p.pendidikan +
             "</span></td>" +
-            '<td style="font-family:var(--mono);font-size:12px;color:#ef4444">' +
-            (p.pensiun || "-") +
+            "<td>" +
+            statusBadge +
             "</td>" +
+            '<td style="font-family:var(--mono);font-size:12px;color:#ef4444">' +
+            (tglPurna ? fd(tglPurna) : "-") +
+            "</td>" +
+            aksiTd +
             "</tr>";
         });
         document.getElementById("purna-body").innerHTML =
           rows ||
-          '<tr><td colspan="9" style="text-align:center;padding:40px;color:#6b9e88">Tidak ada data pegawai purna tugas</td></tr>';
+          '<tr><td colspan="11" style="text-align:center;padding:40px;color:#6b9e88">Tidak ada data pegawai purna tugas</td></tr>';
         var pb = document.getElementById("purna-page-btns");
         pb.innerHTML = "";
         if (purnaPage > 1) addPageBtn(pb, "<", purnaPage - 1, "purna");
