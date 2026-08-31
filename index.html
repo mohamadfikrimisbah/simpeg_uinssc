@@ -807,6 +807,12 @@
       .modal.narrow {
         width: 460px;
       }
+      .modal.wide {
+        width: 960px;
+      }
+      .table-scroll-x {
+        overflow-x: auto;
+      }
       .modal-header {
         padding: 24px 28px 20px;
         border-bottom: 1px solid #b2dece;
@@ -2362,6 +2368,7 @@
               <table class="data-table">
                 <thead>
                   <tr>
+                    <th>Paket</th>
                     <th>Tanggal Surat</th>
                     <th>No. Surat</th>
                     <th>Jumlah Pengusul</th>
@@ -2373,7 +2380,7 @@
                 <tbody id="pengajuan-body">
                   <tr>
                     <td
-                      colspan="6"
+                      colspan="7"
                       style="text-align: center; padding: 24px; opacity: 0.6"
                     >
                       Memuat...
@@ -2800,8 +2807,8 @@
           <div style="display: flex; flex-direction: column; gap: 14px">
             <div class="form-group">
               <label class="form-label">Paket Kenaikan *</label>
-              <select class="form-select" id="pb-paket" disabled>
-                <option value="kenaikan_pangkat">Kenaikan Pangkat</option>
+              <select class="form-select" id="pb-paket">
+                <option value="">-- Pilih Paket --</option>
               </select>
             </div>
             <div class="form-group">
@@ -2833,13 +2840,15 @@
                   <th>Nama / NIP</th>
                   <th>Gol. Lama</th>
                   <th>Gol. Baru</th>
+                  <th>Jabatan Lama</th>
+                  <th>Jabatan Baru</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody id="pb-pengusul-body">
                 <tr>
                   <td
-                    colspan="4"
+                    colspan="6"
                     style="text-align: center; opacity: 0.5; padding: 14px"
                   >
                     Belum ada pengusul ditambahkan
@@ -2864,7 +2873,7 @@
 
     <!-- ISI NOMOR SURAT MODAL -->
     <div class="modal-overlay" id="modal-nomor-surat">
-      <div class="modal">
+      <div class="modal wide">
         <div class="modal-header">
           <div class="modal-title">🔢 Isi Nomor Surat</div>
           <button class="modal-close" onclick="closeModal('modal-nomor-surat')">
@@ -2874,7 +2883,9 @@
         <div class="modal-body">
           <div style="display: flex; flex-direction: column; gap: 14px">
             <div class="form-group">
-              <label class="form-label">Nomor Surat Pengantar *</label>
+              <label class="form-label" id="ns-label-batch"
+                >Nomor Surat *</label
+              >
               <input
                 class="form-input"
                 id="ns-nomor"
@@ -2889,34 +2900,35 @@
               <label class="form-label">Tanggal Surat *</label>
               <input class="form-input" type="date" id="ns-tanggal" />
               <div style="font-size: 12px; opacity: 0.6; margin-top: 4px">
-                Berlaku untuk Surat Pengantar dan semua SPTJM di pengajuan ini
+                Berlaku untuk semua dokumen di pengajuan ini
               </div>
             </div>
             <input type="hidden" id="ns-pengajuan-id" />
 
             <div class="divider"></div>
             <div style="font-size: 13px; font-weight: 600; color: var(--text2)">
-              🔢 Nomor SPTJM per Orang
+              🔢 Nomor Dokumen Individual per Orang
             </div>
             <div style="font-size: 12px; opacity: 0.6; margin-top: -8px">
-              Setiap orang punya nomor SPTJM sendiri, terpisah dari nomor Surat
-              Pengantar di atas
+              Setiap orang punya nomor sendiri untuk tiap jenis dokumen — tidak
+              sama antara satu dokumen dengan dokumen lain, maupun antar orang
             </div>
-            <table class="pengusul-row-table">
-              <thead>
-                <tr>
-                  <th>Nama / NIP</th>
-                  <th>Nomor SPTJM</th>
-                </tr>
-              </thead>
-              <tbody id="ns-sptjm-body">
-                <tr>
-                  <td colspan="2" style="text-align: center; opacity: 0.5">
-                    Memuat daftar pengusul...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-scroll-x">
+              <table class="pengusul-row-table" id="ns-individual-table">
+                <thead>
+                  <tr id="ns-individual-head">
+                    <th>Nama / NIP</th>
+                  </tr>
+                </thead>
+                <tbody id="ns-individual-body">
+                  <tr>
+                    <td style="text-align: center; opacity: 0.5">
+                      Memuat daftar pengusul...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -5383,8 +5395,9 @@
         "IV/e",
       ];
       var pejabatOptions = [];
+      var paketOptions = [];
       var pengajuanListData = [];
-      var pengusulBaruList = []; // { nip, nama, golongan_lama, golongan_baru }
+      var pengusulBaruList = []; // { nip, nama, golongan_lama, golongan_baru, jabatan_lama, jabatan_baru }
 
       var STATUS_LABEL = {
         draft: ["Draft", "badge-draft"],
@@ -5394,9 +5407,31 @@
 
       async function initOtomasiKenaikan() {
         document.getElementById("pengajuan-body").innerHTML =
-          '<tr><td colspan="6" style="text-align:center;padding:24px;opacity:.6">Memuat...</td></tr>';
+          '<tr><td colspan="7" style="text-align:center;padding:24px;opacity:.6">Memuat...</td></tr>';
+        await loadPaketOptions();
         await loadPejabatOptions();
         await loadPengajuanList();
+      }
+
+      async function loadPaketOptions() {
+        var res = await db
+          .from("paket_kenaikan")
+          .select("id, kode, nama")
+          .order("kode");
+        if (res.error) {
+          toast("Gagal memuat paket kenaikan: " + res.error.message, "error");
+          return;
+        }
+        paketOptions = res.data || [];
+        var sel = document.getElementById("pb-paket");
+        if (!sel) return;
+        sel.innerHTML =
+          '<option value="">-- Pilih Paket --</option>' +
+          paketOptions
+            .map(function (p) {
+              return '<option value="' + p.id + '">' + p.nama + "</option>";
+            })
+            .join("");
       }
 
       async function loadPejabatOptions() {
@@ -5435,7 +5470,7 @@
         var res = await db
           .from("pengajuan")
           .select(
-            "id, no_surat, tanggal_surat, status, jenis_pejabat_penandatangan, pengajuan_pengusul(nip)",
+            "id, no_surat, tanggal_surat, status, jenis_pejabat_penandatangan, paket_id, paket_kenaikan(nama), pengajuan_pengusul(nip)",
           )
           .order("created_at", { ascending: false });
         if (res.error) {
@@ -5450,12 +5485,13 @@
         var body = document.getElementById("pengajuan-body");
         if (pengajuanListData.length === 0) {
           body.innerHTML =
-            '<tr><td colspan="6" style="text-align:center;padding:24px;opacity:.6">Belum ada pengajuan</td></tr>';
+            '<tr><td colspan="7" style="text-align:center;padding:24px;opacity:.6">Belum ada pengajuan</td></tr>';
           return;
         }
         var rows = "";
         pengajuanListData.forEach(function (row) {
           var jumlah = (row.pengajuan_pengusul || []).length;
+          var paketNama = row.paket_kenaikan ? row.paket_kenaikan.nama : "-";
           var pejabat = pejabatOptions.filter(function (p) {
             return p.jenis === row.jenis_pejabat_penandatangan;
           })[0];
@@ -5498,6 +5534,8 @@
 
           rows +=
             "<tr><td>" +
+            paketNama +
+            "</td><td>" +
             (row.tanggal_surat || "-") +
             "</td><td>" +
             (row.no_surat || "-") +
@@ -5584,6 +5622,8 @@
           nama: p.nama,
           golongan_lama: p.golongan,
           golongan_baru: p.golongan,
+          jabatan_lama: p.jabatan,
+          jabatan_baru: p.jabatan,
         });
         document.getElementById("pb-cari-pengusul").value = "";
         document.getElementById("pb-suggest").classList.remove("open");
@@ -5605,11 +5645,18 @@
         if (p) p.golongan_baru = val;
       }
 
+      function ubahJabatanBaru(nip, val) {
+        var p = pengusulBaruList.filter(function (x) {
+          return x.nip === nip;
+        })[0];
+        if (p) p.jabatan_baru = val.trim();
+      }
+
       function renderPengusulBaruTable() {
         var body = document.getElementById("pb-pengusul-body");
         if (pengusulBaruList.length === 0) {
           body.innerHTML =
-            '<tr><td colspan="4" style="text-align:center;opacity:.5;padding:14px">Belum ada pengusul ditambahkan</td></tr>';
+            '<tr><td colspan="6" style="text-align:center;opacity:.5;padding:14px">Belum ada pengusul ditambahkan</td></tr>';
           return;
         }
         body.innerHTML = pengusulBaruList
@@ -5636,7 +5683,13 @@
               p.nip +
               "', this.value)\">" +
               options +
-              '</select></td><td><button class="btn btn-ghost btn-sm" onclick="hapusPengusulBaru(\'' +
+              "</select></td><td>" +
+              (p.jabatan_lama || "-") +
+              '</td><td><input class="form-input" style="padding:4px 6px;font-size:12px;min-width:140px" value="' +
+              (p.jabatan_baru || "") +
+              '" placeholder="Jabatan baru" onchange="ubahJabatanBaru(\'' +
+              p.nip +
+              '\', this.value)"/></td><td><button class="btn btn-ghost btn-sm" onclick="hapusPengusulBaru(\'' +
               p.nip +
               "')\">✕</button></td></tr>"
             );
@@ -5645,8 +5698,13 @@
       }
 
       async function savePengajuanBaru() {
+        var paketId = document.getElementById("pb-paket").value;
         var tanggal = document.getElementById("pb-tanggal").value;
         var jenisPejabat = document.getElementById("pb-pejabat").value;
+        if (!paketId) {
+          toast("Paket kenaikan wajib dipilih", "error");
+          return;
+        }
         if (!tanggal) {
           toast("Tanggal surat wajib diisi", "error");
           return;
@@ -5662,17 +5720,10 @@
 
         showLoading("Menyimpan pengajuan...");
         try {
-          var paketRes = await db
-            .from("paket_kenaikan")
-            .select("id")
-            .eq("kode", "kenaikan_pangkat")
-            .single();
-          if (paketRes.error) throw new Error(paketRes.error.message);
-
           var pengajuanRes = await db
             .from("pengajuan")
             .insert({
-              paket_id: paketRes.data.id,
+              paket_id: paketId,
               status: "draft",
               tanggal_surat: tanggal,
               jenis_pejabat_penandatangan: jenisPejabat,
@@ -5690,13 +5741,20 @@
             .insert(pengusulRows);
           if (insPengusul.error) throw new Error(insPengusul.error.message);
 
-          var fieldRows = pengusulBaruList.map(function (p) {
-            return {
+          var fieldRows = [];
+          pengusulBaruList.forEach(function (p) {
+            fieldRows.push({
               pengajuan_id: pengajuanId,
               nip: p.nip,
               key: "golongan_baru",
               value: p.golongan_baru,
-            };
+            });
+            fieldRows.push({
+              pengajuan_id: pengajuanId,
+              nip: p.nip,
+              key: "jabatan_baru",
+              value: p.jabatan_baru,
+            });
           });
           var insField = await db
             .from("pengajuan_field_tambahan")
@@ -5714,28 +5772,67 @@
       }
 
       // -------------------- MODAL: ISI NOMOR SURAT --------------------
-      var nsPengusulList = []; // { nip, nama, nomor_sptjm }
+      var nsPengusulList = []; // { nip, nama, nomor: { <kode_dokumen>: value } }
+      var nsIndividualDocs = []; // [{ kode, nama, dibuat_per_orang, kelompok }]
 
       async function openModalNomorSurat(pengajuanId, tanggalExisting) {
         document.getElementById("ns-pengajuan-id").value = pengajuanId;
         document.getElementById("ns-nomor").value = "";
         document.getElementById("ns-tanggal").value =
           tanggalExisting || new Date().toISOString().slice(0, 10);
-        document.getElementById("ns-sptjm-body").innerHTML =
-          '<tr><td colspan="2" style="text-align:center;opacity:.5">Memuat daftar pengusul...</td></tr>';
+        document.getElementById("ns-individual-head").innerHTML =
+          "<th>Nama / NIP</th>";
+        document.getElementById("ns-individual-body").innerHTML =
+          '<tr><td style="text-align:center;opacity:.5">Memuat daftar pengusul...</td></tr>';
         openModal("modal-nomor-surat");
+
+        var pengajuanRes = await db
+          .from("pengajuan")
+          .select("paket_id")
+          .eq("id", pengajuanId)
+          .single();
+        if (pengajuanRes.error) {
+          toast(
+            "Gagal memuat data pengajuan: " + pengajuanRes.error.message,
+            "error",
+          );
+          return;
+        }
+
+        var dokRes = await db
+          .from("paket_dokumen")
+          .select(
+            "urutan, jenis_dokumen(kode, nama, dibuat_per_orang, kelompok)",
+          )
+          .eq("paket_id", pengajuanRes.data.paket_id)
+          .order("urutan");
+        if (dokRes.error) {
+          toast(
+            "Gagal memuat daftar dokumen: " + dokRes.error.message,
+            "error",
+          );
+          return;
+        }
+        var semuaDok = (dokRes.data || []).map(function (r) {
+          return r.jenis_dokumen;
+        });
+        nsIndividualDocs = semuaDok.filter(function (d) {
+          return d.dibuat_per_orang;
+        });
+        var batchDoc = semuaDok.filter(function (d) {
+          return !d.dibuat_per_orang;
+        })[0];
+        var labelBatch = batchDoc
+          ? batchDoc.nama.replace(/\s*\((Batch|Single)\)\s*$/i, "")
+          : "Surat";
+        document.getElementById("ns-label-batch").textContent =
+          "Nomor " + labelBatch + " *";
 
         var pengusulRes = await db
           .from("pengajuan_pengusul")
           .select("nip, urutan, pegawai(nama)")
           .eq("pengajuan_id", pengajuanId)
           .order("urutan");
-        var fieldRes = await db
-          .from("pengajuan_field_tambahan")
-          .select("nip, key, value")
-          .eq("pengajuan_id", pengajuanId)
-          .eq("key", "nomor_surat_sptjm");
-
         if (pengusulRes.error) {
           toast(
             "Gagal memuat daftar pengusul: " + pengusulRes.error.message,
@@ -5744,47 +5841,83 @@
           return;
         }
 
-        var nomorByNip = {};
+        var kodeIndividual = nsIndividualDocs.map(function (d) {
+          return d.kode;
+        });
+        var fieldRes = await db
+          .from("pengajuan_field_tambahan")
+          .select("nip, key, value")
+          .eq("pengajuan_id", pengajuanId);
+
+        var nomorMap = {}; // nip -> { kode: value }
         (fieldRes.data || []).forEach(function (f) {
-          nomorByNip[f.nip] = f.value;
+          if (!f.key || f.key.indexOf("nomor_surat_") !== 0 || !f.nip) return;
+          var kode = f.key.substring("nomor_surat_".length);
+          if (kodeIndividual.indexOf(kode) === -1) return;
+          if (!nomorMap[f.nip]) nomorMap[f.nip] = {};
+          nomorMap[f.nip][kode] = f.value;
         });
 
         nsPengusulList = (pengusulRes.data || []).map(function (row) {
-          return {
-            nip: row.nip,
-            nama: row.pegawai.nama,
-            nomor_sptjm: nomorByNip[row.nip] || "",
-          };
+          var nomor = {};
+          nsIndividualDocs.forEach(function (d) {
+            nomor[d.kode] =
+              (nomorMap[row.nip] && nomorMap[row.nip][d.kode]) || "";
+          });
+          return { nip: row.nip, nama: row.pegawai.nama, nomor: nomor };
         });
-        renderNsSptjmTable();
+        renderNsIndividualTable();
       }
 
-      function renderNsSptjmTable() {
-        var body = document.getElementById("ns-sptjm-body");
+      function renderNsIndividualTable() {
+        var head = document.getElementById("ns-individual-head");
+        head.innerHTML =
+          "<th>Nama / NIP</th>" +
+          nsIndividualDocs
+            .map(function (d) {
+              return "<th>" + d.nama + "</th>";
+            })
+            .join("");
+
+        var body = document.getElementById("ns-individual-body");
+        var colspan = nsIndividualDocs.length + 1;
         if (nsPengusulList.length === 0) {
           body.innerHTML =
-            '<tr><td colspan="2" style="text-align:center;opacity:.5">Tidak ada pengusul</td></tr>';
+            '<tr><td colspan="' +
+            colspan +
+            '" style="text-align:center;opacity:.5">Tidak ada pengusul</td></tr>';
           return;
         }
         body.innerHTML = nsPengusulList
           .map(function (p, i) {
+            var cells = nsIndividualDocs
+              .map(function (d) {
+                return (
+                  '<td><input class="form-input" style="padding:6px 8px;min-width:110px" value="' +
+                  (p.nomor[d.kode] || "") +
+                  '" placeholder="Nomor" onchange="ubahNomorIndividual(' +
+                  i +
+                  ",'" +
+                  d.kode +
+                  "', this.value)\"/></td>"
+                );
+              })
+              .join("");
             return (
-              "<tr><td>" +
+              '<tr><td style="white-space:nowrap">' +
               p.nama +
               '<br><span style="opacity:.6;font-size:11px">' +
               p.nip +
-              '</span></td><td><input class="form-input" style="padding:6px 8px" value="' +
-              (p.nomor_sptjm || "") +
-              '" placeholder="Contoh: 0457" onchange="ubahNomorSptjm(' +
-              i +
-              ', this.value)"/></td></tr>'
+              "</span></td>" +
+              cells +
+              "</tr>"
             );
           })
           .join("");
       }
 
-      function ubahNomorSptjm(index, val) {
-        nsPengusulList[index].nomor_sptjm = val.trim();
+      function ubahNomorIndividual(index, kode, val) {
+        nsPengusulList[index].nomor[kode] = val.trim();
       }
 
       async function saveNomorSurat() {
@@ -5792,25 +5925,25 @@
         var nomor = document.getElementById("ns-nomor").value.trim();
         var tanggal = document.getElementById("ns-tanggal").value;
         if (!nomor) {
-          toast("Nomor surat pengantar wajib diisi", "error");
+          toast("Nomor surat wajib diisi", "error");
           return;
         }
         if (!tanggal) {
           toast("Tanggal surat wajib diisi", "error");
           return;
         }
-        var kosong = nsPengusulList.filter(function (p) {
-          return !p.nomor_sptjm;
+
+        var belumLengkap = [];
+        nsPengusulList.forEach(function (p) {
+          nsIndividualDocs.forEach(function (d) {
+            if (!p.nomor[d.kode]) belumLengkap.push(p.nama + " - " + d.nama);
+          });
         });
-        if (kosong.length > 0) {
+        if (belumLengkap.length > 0) {
           toast(
-            "Nomor SPTJM untuk " +
-              kosong
-                .map(function (p) {
-                  return p.nama;
-                })
-                .join(", ") +
-              " belum diisi",
+            "Belum lengkap: " +
+              belumLengkap.slice(0, 3).join(", ") +
+              (belumLengkap.length > 3 ? " ..." : ""),
             "error",
           );
           return;
@@ -5831,26 +5964,31 @@
           return;
         }
 
-        var fieldRows = nsPengusulList.map(function (p) {
-          return {
-            pengajuan_id: id,
-            nip: p.nip,
-            key: "nomor_surat_sptjm",
-            value: p.nomor_sptjm,
-          };
+        var fieldRows = [];
+        nsPengusulList.forEach(function (p) {
+          nsIndividualDocs.forEach(function (d) {
+            fieldRows.push({
+              pengajuan_id: id,
+              nip: p.nip,
+              key: "nomor_surat_" + d.kode,
+              value: p.nomor[d.kode],
+            });
+          });
         });
-        var upsertRes = await db
-          .from("pengajuan_field_tambahan")
-          .upsert(fieldRows, { onConflict: "pengajuan_id,nip,key" });
-        hideLoading();
-        if (upsertRes.error) {
-          toast(
-            "Gagal menyimpan nomor SPTJM: " + upsertRes.error.message,
-            "error",
-          );
-          return;
+        if (fieldRows.length > 0) {
+          var upsertRes = await db
+            .from("pengajuan_field_tambahan")
+            .upsert(fieldRows, { onConflict: "pengajuan_id,nip,key" });
+          if (upsertRes.error) {
+            hideLoading();
+            toast(
+              "Gagal menyimpan nomor dokumen: " + upsertRes.error.message,
+              "error",
+            );
+            return;
+          }
         }
-
+        hideLoading();
         toast("Nomor surat tersimpan, siap digenerate", "success");
         closeModal("modal-nomor-surat");
         await loadPengajuanList();
