@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -2965,6 +2966,13 @@
             onclick="closeModal('modal-lihat-file')"
           >
             Tutup
+          </button>
+          <button
+            class="btn btn-primary"
+            id="lf-btn-zip"
+            onclick="unduhSemuaZip()"
+          >
+            🗜️ Unduh Semua (ZIP)
           </button>
         </div>
       </div>
@@ -6019,28 +6027,52 @@
       }
 
       // -------------------- LIHAT FILE --------------------
+      var lfDokumenList = []; // { id, nip, file_path, jenis_dokumen, nama }
+      var lfPengajuanId = null;
+
       async function lihatFileDokumen(pengajuanId) {
         showLoading("Memuat daftar file...");
+        lfPengajuanId = pengajuanId;
         var res = await db
           .from("pengajuan_dokumen")
           .select("id, nip, file_path, jenis_dokumen(nama)")
           .eq("pengajuan_id", pengajuanId)
           .order("created_at", { ascending: true });
-        hideLoading();
         if (res.error) {
+          hideLoading();
           toast("Gagal memuat file: " + res.error.message, "error");
           return;
         }
+        var pengusulRes = await db
+          .from("pengajuan_pengusul")
+          .select("nip, pegawai(nama)")
+          .eq("pengajuan_id", pengajuanId);
+        hideLoading();
+        var namaMap = {}; // nip -> nama
+        (pengusulRes.data || []).forEach(function (p) {
+          namaMap[p.nip] = p.pegawai ? p.pegawai.nama : "";
+        });
+        lfDokumenList = (res.data || []).map(function (d) {
+          return {
+            id: d.id,
+            nip: d.nip,
+            file_path: d.file_path,
+            jenis_dokumen: d.jenis_dokumen,
+            nama: d.nip ? namaMap[d.nip] || "" : "",
+          };
+        });
         var list = document.getElementById("lf-list");
-        if (!res.data || res.data.length === 0) {
+        var zipBtn = document.getElementById("lf-btn-zip");
+        if (zipBtn) zipBtn.disabled = lfDokumenList.length === 0;
+        if (lfDokumenList.length === 0) {
           list.innerHTML =
             '<div style="opacity:.6;text-align:center;padding:14px">Belum ada file</div>';
         } else {
-          list.innerHTML = res.data
+          list.innerHTML = lfDokumenList
             .map(function (d) {
               var label =
                 (d.jenis_dokumen ? d.jenis_dokumen.nama : "Dokumen") +
-                (d.nip ? " — " + d.nip : "");
+                (d.nip ? " — " + (d.nama ? d.nama + " (" + d.nip + ")" : d.nip) : "");
               return (
                 '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:8px">' +
                 "<span>" +
@@ -6053,6 +6085,63 @@
             .join("");
         }
         openModal("modal-lihat-file");
+      }
+
+      function sanitizeNamaFile(s) {
+        return String(s || "")
+          .replace(/[\\/:*?"<>|]/g, "-")
+          .trim();
+      }
+
+      // -------------------- UNDUH SEMUA (ZIP) --------------------
+      async function unduhSemuaZip() {
+        if (!lfDokumenList || lfDokumenList.length === 0) {
+          toast("Belum ada file untuk diunduh", "error");
+          return;
+        }
+        showLoading("Menyiapkan ZIP (0/" + lfDokumenList.length + ")...");
+        try {
+          var zip = new JSZip();
+          for (var i = 0; i < lfDokumenList.length; i++) {
+            var d = lfDokumenList[i];
+            showLoading(
+              "Menyiapkan ZIP (" + (i + 1) + "/" + lfDokumenList.length + ")...",
+            );
+            var dlRes = await db.storage
+              .from("dokumen-kenaikan")
+              .download(d.file_path);
+            if (dlRes.error || !dlRes.data) {
+              throw new Error(
+                "Gagal mengunduh " +
+                  d.file_path +
+                  ": " +
+                  (dlRes.error ? dlRes.error.message : "tidak diketahui"),
+              );
+            }
+            var ext = d.file_path.indexOf(".") !== -1
+              ? d.file_path.substring(d.file_path.lastIndexOf("."))
+              : "";
+            var namaDok = sanitizeNamaFile(
+              d.jenis_dokumen ? d.jenis_dokumen.nama : "Dokumen",
+            );
+            var folder = d.nip
+              ? sanitizeNamaFile(d.nama ? d.nama + " - " + d.nip : d.nip)
+              : "Dokumen Bersama";
+            zip.file(folder + "/" + namaDok + ext, dlRes.data);
+          }
+          var blob = await zip.generateAsync({ type: "blob" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "dokumen_pengajuan_" + lfPengajuanId + ".zip";
+          a.click();
+          URL.revokeObjectURL(url);
+          hideLoading();
+          toast("ZIP berhasil diunduh", "success");
+        } catch (err) {
+          hideLoading();
+          toast("Gagal membuat ZIP: " + err.message, "error");
+        }
       }
 
       async function unduhFileDokumen(filePath) {
