@@ -5252,9 +5252,26 @@
             .update({ nama: nama, role: role })
             .eq("id", selectedUID);
           if (res.error) throw res.error;
-          if (pass && selectedUID === currentUser.id) {
-            var pwRes = await db.auth.updateUser({ password: pass });
-            if (pwRes.error) throw pwRes.error;
+          if (pass) {
+            if (selectedUID === currentUser.id) {
+              var pwRes = await db.auth.updateUser({ password: pass });
+              if (pwRes.error) throw pwRes.error;
+            } else {
+              var resetRes = await db.functions.invoke(
+                "admin-reset-password",
+                { body: { user_id: selectedUID, new_password: pass } },
+              );
+              if (resetRes.error) {
+                throw new Error(
+                  resetRes.error.message || "Gagal mengubah password user",
+                );
+              }
+              if (resetRes.data && resetRes.data.success === false) {
+                throw new Error(
+                  resetRes.data.error || "Gagal mengubah password user",
+                );
+              }
+            }
           }
           if (selectedUID === currentUser.id) {
             currentProfile.nama = nama;
