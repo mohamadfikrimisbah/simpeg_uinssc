@@ -4416,6 +4416,34 @@
       // ============================================================
       // IMPORT EXCEL / CSV
       // ============================================================
+      var TANGGAL_KEYS = ["tglLahir", "pensiun", "tmtGol", "tmtJab"];
+
+      // Excel menyimpan tanggal sebagai angka serial (hari sejak 1899-12-30).
+      // Tanpa cellDates, sheet_to_json mengembalikan angka mentah itu (mis.
+      // "46143"), yang bikin Postgres menolak dengan "invalid input syntax
+      // for type date". Fungsi ini mengubahnya (atau format dd/mm/yyyy teks)
+      // jadi yyyy-mm-dd sebelum dikirim ke database.
+      function parseTanggalImport(raw) {
+        var val = String(raw || "").trim();
+        if (!val) return "";
+        if (/^\d+$/.test(val)) {
+          var utcDays = parseInt(val, 10) - 25569;
+          var d = new Date(utcDays * 86400 * 1000);
+          return (
+            d.getUTCFullYear() +
+            "-" +
+            String(d.getUTCMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(d.getUTCDate()).padStart(2, "0")
+          );
+        }
+        var m = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (m) {
+          return m[3] + "-" + m[2].padStart(2, "0") + "-" + m[1].padStart(2, "0");
+        }
+        return val;
+      }
+
       var COL_MAP = {
         NIP: "nip",
         "NIP *": "nip",
@@ -4522,7 +4550,10 @@
           var obj = {};
           headers.forEach(function (h, ci) {
             var key = COL_MAP[h];
-            if (key) obj[key] = String(row[ci] || "").trim();
+            if (!key) return;
+            var raw = String(row[ci] || "").trim();
+            obj[key] =
+              TANGGAL_KEYS.indexOf(key) >= 0 ? parseTanggalImport(raw) : raw;
           });
           if (!obj.nip || !obj.nama) {
             errors.push("Baris " + (ri + 1) + ": NIP atau Nama kosong");
