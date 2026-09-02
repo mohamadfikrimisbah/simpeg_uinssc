@@ -2088,6 +2088,7 @@
                     class="form-input"
                     id="f-jabatan"
                     placeholder="Jabatan pegawai"
+                    onblur="autoTmtPensiunTambah()"
                   />
                 </div>
                 <div class="form-group">
@@ -2113,7 +2114,11 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Jenis Pegawai *</label
-                  ><select class="form-select" id="f-jenis">
+                  ><select
+                    class="form-select"
+                    id="f-jenis"
+                    onchange="autoTmtPensiunTambah()"
+                  >
                     <option value="">-- Pilih --</option>
                     <option>Dosen</option>
                     <option>Tendik</option>
@@ -2588,7 +2593,11 @@
             </div>
             <div class="form-group">
               <label class="form-label">Jabatan</label
-              ><input class="form-input" id="e-jabatan" />
+              ><input
+                class="form-input"
+                id="e-jabatan"
+                onblur="autoTmtPensiunEdit()"
+              />
             </div>
             <div class="form-group">
               <label class="form-label">TMT Jabatan</label
@@ -2604,7 +2613,11 @@
             </div>
             <div class="form-group">
               <label class="form-label">Jenis Pegawai</label
-              ><select class="form-select" id="e-jenis">
+              ><select
+                class="form-select"
+                id="e-jenis"
+                onchange="autoTmtPensiunEdit()"
+              >
                 <option>Dosen</option>
                 <option>Tendik</option>
               </select>
@@ -3079,6 +3092,7 @@
       var currentPage = 1;
       var PAGE_SIZE = 10;
       var selectedNIP = null;
+      var editJenisLama = "";
       var selectedUID = null;
       var charts = {};
       var pendingImport = [];
@@ -4056,6 +4070,70 @@
       }
 
       // ============================================================
+      // TMT PENSIUN OTOMATIS
+      // Batas Usia Pensiun PNS: 58 th (Administrasi/Ahli Pertama/Ahli
+      // Muda/Keterampilan), 60 th (Pimpinan Tinggi/Ahli Madya), 65 th
+      // (Ahli Utama/Dosen), 70 th (Guru Besar). Yang diotomasi di sini
+      // cuma 3 pemicu paling umum: naik jabatan ke Guru Besar/Ahli
+      // Madya, dan pindah Tendik -> Dosen.
+      // ============================================================
+      function usiaPensiunDariJabatan(jabatan, jenisBaru, jenisLama) {
+        var j = String(jabatan || "").toLowerCase();
+        if (j.indexOf("guru besar") >= 0 || j.indexOf("profesor") >= 0)
+          return 70;
+        if (j.indexOf("ahli madya") >= 0) return 60;
+        if (jenisBaru === "Dosen" && jenisLama === "Tendik") return 65;
+        return null;
+      }
+
+      // TMT Pensiun = tanggal 1 pada bulan setelah pegawai berulang tahun
+      // ke-N (konvensi resmi BKN/PNS), dihitung dari tanggal lahir.
+      function hitungTmtPensiunOtomatis(tglLahir, usiaTahun) {
+        if (!tglLahir || !usiaTahun) return "";
+        var lahir = new Date(tglLahir);
+        if (isNaN(lahir.getTime())) return "";
+        var ultahKeN = new Date(
+          lahir.getFullYear() + usiaTahun,
+          lahir.getMonth(),
+          lahir.getDate(),
+        );
+        var tmt = new Date(ultahKeN.getFullYear(), ultahKeN.getMonth() + 1, 1);
+        return (
+          tmt.getFullYear() +
+          "-" +
+          String(tmt.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(tmt.getDate()).padStart(2, "0")
+        );
+      }
+
+      function autoTmtPensiunTambah() {
+        var jabatan = document.getElementById("f-jabatan").value;
+        var jenis = document.getElementById("f-jenis").value;
+        var tglLahir = document.getElementById("f-tgl-lahir").value;
+        var usia = usiaPensiunDariJabatan(jabatan, jenis, "");
+        if (usia && tglLahir) {
+          document.getElementById("f-pensiun").value = hitungTmtPensiunOtomatis(
+            tglLahir,
+            usia,
+          );
+        }
+      }
+
+      function autoTmtPensiunEdit() {
+        var jabatan = document.getElementById("e-jabatan").value;
+        var jenis = document.getElementById("e-jenis").value;
+        var tglLahir = document.getElementById("e-tgl-lahir").value;
+        var usia = usiaPensiunDariJabatan(jabatan, jenis, editJenisLama);
+        if (usia && tglLahir) {
+          document.getElementById("e-pensiun").value = hitungTmtPensiunOtomatis(
+            tglLahir,
+            usia,
+          );
+        }
+      }
+
+      // ============================================================
       // EDIT
       // ============================================================
       function editPegawai() {
@@ -4069,6 +4147,7 @@
         });
         if (!p) return;
         selectedNIP = nip;
+        editJenisLama = p.jenis || "";
         var fv = {
           "e-nip": p.nip,
           "e-nidn": p.nidn || "",
@@ -4564,6 +4643,26 @@
           var existing = pegawaiData.find(function (p) {
             return p.nip === obj.nip;
           });
+
+          // Kalau baris ini mengubah Jabatan/Jenis (dan file tidak sudah
+          // menentukan TMT Pensiun sendiri), sesuaikan TMT Pensiun otomatis
+          // -- sama seperti di form Tambah/Edit Pegawai.
+          if (!obj.pensiun && (obj.jabatan || obj.jenis)) {
+            var jabatanCek = obj.jabatan || (existing ? existing.jabatan : "");
+            var jenisBaruCek = obj.jenis || (existing ? existing.jenis : "");
+            var jenisLamaCek = existing ? existing.jenis : "";
+            var tglLahirCek =
+              obj.tglLahir || (existing ? existing.tglLahir : "");
+            var usiaCek = usiaPensiunDariJabatan(
+              jabatanCek,
+              jenisBaruCek,
+              jenisLamaCek,
+            );
+            if (usiaCek && tglLahirCek) {
+              obj.pensiun = hitungTmtPensiunOtomatis(tglLahirCek, usiaCek);
+            }
+          }
+
           pendingImport.push({
             mode: existing ? "update" : "insert",
             data: obj,
