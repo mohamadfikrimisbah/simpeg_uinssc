@@ -113,20 +113,20 @@
         letter-spacing: 1.5px;
         color: rgba(255, 255, 255, 0.35);
         text-transform: uppercase;
-        padding: 20px 20px 8px;
+        padding: 20px 26px 8px;
       }
       .nav-item {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 11px 20px;
+        padding: 11px 16px;
+        margin: 1px 10px;
+        border-radius: 999px;
         cursor: pointer;
         transition: all 0.2s;
         font-size: 14px;
         font-weight: 500;
         color: rgba(255, 255, 255, 0.65);
-        border-left: 3px solid transparent;
-        margin: 1px 0;
         user-select: none;
       }
       .nav-item:hover {
@@ -134,13 +134,8 @@
         color: #16d086;
       }
       .nav-item.active {
-        background: linear-gradient(
-          90deg,
-          rgba(22, 208, 134, 0.15),
-          transparent
-        );
+        background: rgba(22, 208, 134, 0.16);
         color: #16d086;
-        border-left-color: #16d086;
       }
       .nav-icon {
         font-size: 16px;
@@ -223,8 +218,9 @@
         box-shadow: 0 1px 8px rgba(5, 75, 56, 0.06);
       }
       .page-title {
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.2px;
         color: #054b38;
       }
       .page-sub {
@@ -245,7 +241,7 @@
         align-items: center;
         gap: 7px;
         padding: 9px 18px;
-        border-radius: 9px;
+        border-radius: 999px;
         font-family: var(--font);
         font-size: 13px;
         font-weight: 600;
@@ -261,7 +257,7 @@
       .btn-primary:hover {
         background: linear-gradient(135deg, #0d8a58, #12aa6e);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(18, 170, 110, 0.4);
+        box-shadow: 0 3px 10px rgba(18, 170, 110, 0.32);
       }
       .btn-ghost {
         background: #f0faf5;
@@ -326,18 +322,24 @@
       .stat-card {
         background: #ffffff;
         border: 1px solid #b2dece;
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 20px;
         position: relative;
         overflow: hidden;
+        box-shadow:
+          0 1px 2px rgba(5, 75, 56, 0.07),
+          0 1px 3px rgba(5, 75, 56, 0.09);
         transition:
           border-color 0.2s,
-          transform 0.2s;
+          transform 0.2s,
+          box-shadow 0.2s;
       }
       .stat-card:hover {
         border-color: #12aa6e;
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(18, 170, 110, 0.15);
+        box-shadow:
+          0 4px 10px rgba(5, 75, 56, 0.14),
+          0 2px 4px rgba(5, 75, 56, 0.08);
       }
       .stat-card::before {
         content: "";
@@ -420,16 +422,23 @@
       .chart-card {
         background: #ffffff;
         border: 1px solid #b2dece;
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 24px;
-        transition: border-color 0.2s;
-        box-shadow: 0 1px 4px rgba(5, 75, 56, 0.05);
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+        box-shadow:
+          0 1px 2px rgba(5, 75, 56, 0.07),
+          0 1px 3px rgba(5, 75, 56, 0.09);
       }
       .chart-card:hover {
         border-color: #12aa6e;
+        box-shadow:
+          0 4px 10px rgba(5, 75, 56, 0.14),
+          0 2px 4px rgba(5, 75, 56, 0.08);
       }
       .chart-title {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 700;
         margin-bottom: 4px;
         color: #054b38;
@@ -479,7 +488,7 @@
       .input-wrap select {
         background: #f0faf5;
         border: 1px solid #b2dece;
-        border-radius: 9px;
+        border-radius: 12px;
         padding: 9px 14px 9px 38px;
         font-family: var(--font);
         font-size: 13px;
@@ -513,7 +522,7 @@
       .table-wrap {
         background: #ffffff;
         border: 1px solid #b2dece;
-        border-radius: 14px;
+        border-radius: 16px;
         overflow: hidden;
       }
       table {
@@ -562,12 +571,14 @@
       .table-scroll-outer {
         background: #ffffff;
         border: 1px solid #b2dece;
-        border-radius: 14px;
+        border-radius: 16px;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         width: 100%;
         display: block;
-        box-shadow: 0 1px 4px rgba(5, 75, 56, 0.05);
+        box-shadow:
+          0 1px 2px rgba(5, 75, 56, 0.07),
+          0 1px 3px rgba(5, 75, 56, 0.09);
       }
       .data-table {
         width: 100%;
@@ -622,7 +633,7 @@
         display: inline-flex;
         align-items: center;
         padding: 3px 10px;
-        border-radius: 20px;
+        border-radius: 999px;
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.3px;
@@ -793,14 +804,16 @@
       .modal {
         background: #ffffff;
         border: 1px solid #b2dece;
-        border-radius: 18px;
+        border-radius: 24px;
         width: 700px;
         max-width: 95vw;
         max-height: 90vh;
         overflow-y: auto;
         transform: translateY(20px) scale(0.97);
         transition: transform 0.25s;
-        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+        box-shadow:
+          0 20px 50px rgba(5, 75, 56, 0.32),
+          0 6px 16px rgba(5, 75, 56, 0.18);
       }
       .modal-overlay.open .modal {
         transform: translateY(0) scale(1);
@@ -878,7 +891,7 @@
       .form-select {
         background: #f0faf5;
         border: 1px solid #b2dece;
-        border-radius: 9px;
+        border-radius: 12px;
         padding: 10px 14px;
         font-family: var(--font);
         font-size: 13px;
@@ -939,7 +952,7 @@
       .login-card {
         background: #ffffff;
         border: 1px solid #b2dece;
-        border-radius: 20px;
+        border-radius: 28px;
         padding: 44px;
         width: 420px;
         box-shadow: 0 32px 80px rgba(5, 75, 56, 0.3);
@@ -1008,13 +1021,13 @@
       .role-tabs {
         display: flex;
         background: #f0faf5;
-        border-radius: 10px;
+        border-radius: 999px;
         padding: 4px;
         gap: 4px;
       }
       .role-tab {
         padding: 8px 20px;
-        border-radius: 7px;
+        border-radius: 999px;
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
@@ -1395,7 +1408,7 @@
         /* Modal */
         .modal {
           width: 95vw;
-          border-radius: 14px;
+          border-radius: 20px;
         }
         .modal-body {
           padding: 16px 18px;
@@ -1795,13 +1808,13 @@
           </style>
           <div class="topbar-actions">
             <button class="btn btn-ghost" onclick="exportData()">
-              📤 Export CSV
+              📤 <span>Export CSV</span>
             </button>
             <button
               class="btn btn-primary admin-only"
               onclick="showView('tambah', null)"
             >
-              ➕ Tambah Pegawai
+              ➕ <span>Tambah Pegawai</span>
             </button>
           </div>
         </div>
