@@ -89,7 +89,7 @@
         display: inline-flex;
         align-items: center;
         gap: 10px;
-        background: linear-gradient(135deg, #12aa6e, #16d086);
+        background: linear-gradient(135deg, #086541, #0b7a4e);
         border-radius: 12px;
         padding: 10px 14px;
         width: 100%;
@@ -166,7 +166,7 @@
         width: 34px;
         height: 34px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #12aa6e, #16d086);
+        background: linear-gradient(135deg, #086541, #0b7a4e);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -256,12 +256,12 @@
         transition: all 0.2s;
       }
       .btn-primary {
-        background: linear-gradient(135deg, #12aa6e, #16d086);
+        background: #0b7a4e;
         color: #fff;
         border: none;
       }
       .btn-primary:hover {
-        background: linear-gradient(135deg, #0d8a58, #12aa6e);
+        background: #086541;
         transform: translateY(-1px);
         box-shadow: 0 3px 10px rgba(18, 170, 110, 0.32);
       }
@@ -284,11 +284,11 @@
         background: rgba(239, 68, 68, 0.25);
       }
       .btn-success {
-        background: #16d086;
+        background: #0b7a4e;
         color: #fff;
       }
       .btn-success:hover {
-        background: #059669;
+        background: #086541;
       }
       .btn-warning {
         background: rgba(245, 158, 11, 0.15);
@@ -571,7 +571,7 @@
       td.mono {
         font-family: var(--mono);
         font-size: 12px;
-        color: #12aa6e;
+        color: #0b7a4e;
       }
       /* TABLE SCROLL — struktur baru */
       .table-scroll-outer {
@@ -630,7 +630,7 @@
       .data-table td.mono {
         font-family: var(--mono);
         font-size: 12px;
-        color: #12aa6e;
+        color: #0b7a4e;
       }
 
       /* Pagination tetap di luar scroll */
@@ -781,12 +781,12 @@
       }
       .page-btn:hover {
         border-color: #12aa6e;
-        color: #12aa6e;
+        color: #0b7a4e;
       }
       .page-btn.active {
-        background: linear-gradient(135deg, #12aa6e, #16d086);
+        background: #0b7a4e;
         color: #fff;
-        border-color: #12aa6e;
+        border-color: #0b7a4e;
       }
 
       /* MODAL */
@@ -1044,7 +1044,8 @@
         transition: all 0.2s;
       }
       .role-tab.active {
-        background: #12aa6e;
+        background: #0b7a4e;
+        border-color: #0b7a4e;
         color: #fff;
       }
 
@@ -1155,7 +1156,7 @@
       .import-result.success {
         background: rgba(18, 170, 110, 0.08);
         border: 1px solid rgba(18, 170, 110, 0.25);
-        color: #0d8a58;
+        color: #0b7a4e;
       }
       .import-result.error {
         background: rgba(239, 68, 68, 0.1);
@@ -1187,6 +1188,7 @@
         font-size: 18px;
         font-weight: 700;
         flex-shrink: 0;
+        color: #fff;
       }
       .user-card-info {
         flex: 1;
@@ -1245,7 +1247,7 @@
         border-radius: 10px;
         padding: 14px 16px;
         font-size: 13px;
-        color: #0d8a58;
+        color: #0b7a4e;
         margin-bottom: 16px;
         line-height: 1.6;
       }
@@ -1786,7 +1788,7 @@
               border-radius: 20px;
               background: rgba(18, 170, 110, 0.1);
               border: 1px solid rgba(18, 170, 110, 0.2);
-              color: #12aa6e;
+              color: #0b7a4e;
             "
           >
             <span
@@ -2462,7 +2464,7 @@
                 width: 56px;
                 height: 56px;
                 border-radius: 50%;
-                background: linear-gradient(135deg, #12aa6e, #16d086);
+                background: linear-gradient(135deg, #086541, #0b7a4e);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -5248,8 +5250,8 @@
           var isMe = u.id === currentUser.id;
           var bg =
             u.role === "admin"
-              ? "linear-gradient(135deg,#ef4444,#f97316)"
-              : "linear-gradient(135deg,#10b981,#06b6d4)";
+              ? "linear-gradient(135deg,#054b38,#0b7a4e)"
+              : "linear-gradient(135deg,#0e7490,#0369a1)";
           var av = (u.nama || u.username).charAt(0).toUpperCase();
           var nm = u.nama || u.username;
           var meTag = isMe
