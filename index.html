@@ -3497,7 +3497,7 @@
         var isHBar = extra.indexAxis === "y";
         var dlPlugin = {
           display: showLabels,
-          color: "#f0f6ff",
+          color: "#ffffff",
           font: {
             family: "Plus Jakarta Sans",
             weight: "700",
@@ -3514,12 +3514,12 @@
           dlPlugin.anchor = "end";
           dlPlugin.align = "right";
           dlPlugin.offset = 4;
-          dlPlugin.color = "#94a3b8";
+          dlPlugin.color = "#2d5c47";
         } else {
           dlPlugin.anchor = "end";
           dlPlugin.align = "top";
           dlPlugin.offset = 2;
-          dlPlugin.color = "#94a3b8";
+          dlPlugin.color = "#2d5c47";
         }
 
         var options = {
@@ -3529,16 +3529,16 @@
           plugins: {
             legend: {
               labels: {
-                color: "#94a3b8",
+                color: "#2d5c47",
                 font: { family: "Plus Jakarta Sans", size: 12 },
                 boxWidth: 12,
               },
             },
             tooltip: {
-              backgroundColor: "#111827",
-              titleColor: "#f0f6ff",
-              bodyColor: "#94a3b8",
-              borderColor: "#1e2d50",
+              backgroundColor: "#054b38",
+              titleColor: "#ffffff",
+              bodyColor: "#e6f7f0",
+              borderColor: "#12aa6e",
               borderWidth: 1,
             },
             datalabels: dlPlugin,
@@ -3547,16 +3547,16 @@
             isBar || type === "line"
               ? {
                   x: {
-                    grid: { color: "#1e2d50" },
+                    grid: { color: "#e3f1ea" },
                     ticks: {
-                      color: "#64748b",
+                      color: "#2d5c47",
                       font: { family: "Plus Jakarta Sans" },
                     },
                   },
                   y: {
-                    grid: { color: "#1e2d50" },
+                    grid: { color: "#e3f1ea" },
                     ticks: {
-                      color: "#64748b",
+                      color: "#2d5c47",
                       font: { family: "Plus Jakarta Sans" },
                     },
                   },
@@ -3592,15 +3592,15 @@
         var maxVal = Math.max.apply(null, data);
         var bgColors = data.map(function (v, i) {
           var y = parseInt(labels[i]);
-          if (y <= yr + 2) return "#ef444488";
+          if (y <= yr + 2) return "#ef4444";
           if (v === maxVal && v > 0) return "#f59e0b";
-          return "#3b82f688";
+          return "#12aa6e";
         });
         var bdColors = data.map(function (v, i) {
           var y = parseInt(labels[i]);
-          if (y <= yr + 2) return "#ef4444";
-          if (v === maxVal && v > 0) return "#f59e0b";
-          return "#3b82f6";
+          if (y <= yr + 2) return "#b91c1c";
+          if (v === maxVal && v > 0) return "#b45309";
+          return "#0b7a4e";
         });
         return { bg: bgColors, bd: bdColors };
       }
@@ -3621,7 +3621,7 @@
           [
             {
               data: [pns, pppk],
-              backgroundColor: ["#3b82f6", "#f59e0b"],
+              backgroundColor: ["#0b7a4e", "#b45309"],
               borderWidth: 0,
             },
           ],
@@ -3639,7 +3639,7 @@
           [
             {
               data: [dos, ten],
-              backgroundColor: ["#8b5cf6", "#06b6d4"],
+              backgroundColor: ["#6d28d9", "#0e7490"],
               borderWidth: 0,
             },
           ],
@@ -3659,10 +3659,10 @@
         var agVals = Object.values(ag);
         var agHL = highlightColors(
           agVals,
-          "#3b82f688",
-          "#3b82f6",
+          "#12aa6e",
+          "#0b7a4e",
           "#f59e0b",
-          "#f59e0b",
+          "#b45309",
         );
         mkChart("chartUsia", "bar", Object.keys(ag), [
           {
@@ -3689,10 +3689,10 @@
         });
         var pdHL = highlightColors(
           pdV,
-          "#3b82f688",
-          "#3b82f6",
+          "#12aa6e",
+          "#0b7a4e",
           "#f59e0b",
-          "#f59e0b",
+          "#b45309",
         );
         mkChart("chartPendidikan", "bar", pdL, [
           {
@@ -3716,10 +3716,10 @@
         });
         var gmHL = highlightColors(
           gv,
-          "#3b82f688",
-          "#3b82f6",
+          "#12aa6e",
+          "#0b7a4e",
           "#f59e0b",
-          "#f59e0b",
+          "#b45309",
         );
         mkChart("chartGolongan", "bar", gk, [
           {
@@ -3747,10 +3747,10 @@
         });
         var jHL = highlightColors(
           jv,
-          "#3b82f688",
-          "#3b82f6",
+          "#12aa6e",
+          "#0b7a4e",
           "#f59e0b",
-          "#f59e0b",
+          "#b45309",
         );
         mkChart(
           "chartJabatan",
