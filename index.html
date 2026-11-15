@@ -34,7 +34,13 @@
         --cyan: #06b6d4;
         --text: #0d2b20;
         --text2: #2d5c47;
-        --text3: #6b9e88;
+        --text3: #4a7c66;
+        --primary: #0b7a4e;
+        --primary-hover: #086541;
+        --danger-text: #b91c1c;
+        --warn-text: #b45309;
+        --chart-grid: #e3f1ea;
+        --chart-text: #2d5c47;
         --font: "Plus Jakarta Sans", sans-serif;
         --mono: "JetBrains Mono", monospace;
         /* sidebar */
@@ -111,7 +117,7 @@
         font-size: 10px;
         font-weight: 700;
         letter-spacing: 1.5px;
-        color: rgba(255, 255, 255, 0.35);
+        color: rgba(255, 255, 255, 0.6);
         text-transform: uppercase;
         padding: 20px 26px 8px;
       }
@@ -175,7 +181,7 @@
       }
       .user-role {
         font-size: 11px;
-        color: rgba(255, 255, 255, 0.45);
+        color: rgba(255, 255, 255, 0.65);
       }
       .role-badge {
         margin-left: auto;
@@ -225,7 +231,7 @@
       }
       .page-sub {
         font-size: 13px;
-        color: #6b9e88;
+        color: #4a7c66;
         margin-left: 4px;
       }
       .topbar-actions {
@@ -408,7 +414,7 @@
       }
       .stat-label {
         font-size: 12px;
-        color: #6b9e88;
+        color: #4a7c66;
         font-weight: 500;
       }
 
@@ -445,7 +451,7 @@
       }
       .chart-sub {
         font-size: 12px;
-        color: #6b9e88;
+        color: #4a7c66;
         margin-bottom: 20px;
       }
       .chart-wrap {
@@ -472,7 +478,7 @@
       }
       .section-sub {
         font-size: 13px;
-        color: #6b9e88;
+        color: #4a7c66;
         margin-top: 2px;
       }
       .search-bar {
@@ -487,7 +493,7 @@
       .input-wrap input,
       .input-wrap select {
         background: #f0faf5;
-        border: 1px solid #b2dece;
+        border: 1px solid #46a585;
         border-radius: 12px;
         padding: 9px 14px 9px 38px;
         font-family: var(--font);
@@ -506,14 +512,14 @@
         border-color: #12aa6e;
       }
       .input-wrap input::placeholder {
-        color: #6b9e88;
+        color: #4a7c66;
       }
       .input-icon {
         position: absolute;
         left: 12px;
         top: 50%;
         transform: translateY(-50%);
-        color: #6b9e88;
+        color: #4a7c66;
         font-size: 14px;
         pointer-events: none;
       }
@@ -752,7 +758,7 @@
       }
       .pagination-info {
         font-size: 12px;
-        color: #6b9e88;
+        color: #4a7c66;
       }
       .pagination-btns {
         display: flex;
@@ -890,7 +896,7 @@
       .form-input,
       .form-select {
         background: #f0faf5;
-        border: 1px solid #b2dece;
+        border: 1px solid #46a585;
         border-radius: 12px;
         padding: 10px 14px;
         font-family: var(--font);
@@ -906,7 +912,7 @@
         box-shadow: 0 0 0 3px rgba(18, 170, 110, 0.12);
       }
       .form-input::placeholder {
-        color: #6b9e88;
+        color: #4a7c66;
       }
 
       /* DETAIL */
@@ -917,7 +923,7 @@
       }
       .detail-label {
         font-size: 11px;
-        color: #6b9e88;
+        color: #4a7c66;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -980,7 +986,7 @@
       }
       .login-logo-sub {
         font-size: 12px;
-        color: #6b9e88;
+        color: #4a7c66;
       }
       .login-title {
         font-size: 22px;
@@ -990,7 +996,7 @@
       }
       .login-sub {
         font-size: 14px;
-        color: #6b9e88;
+        color: #4a7c66;
         margin-bottom: 28px;
       }
       .login-form {
@@ -1002,7 +1008,7 @@
         padding: 13px 16px;
         font-size: 14px;
         background: #f0faf5;
-        border-color: #b2dece;
+        border-color: #46a585;
         color: #054b38;
       }
       .login-hint {
@@ -1012,7 +1018,7 @@
         padding: 14px;
         margin-top: 20px;
         font-size: 12px;
-        color: #6b9e88;
+        color: #4a7c66;
         line-height: 1.8;
       }
       .login-hint strong {
@@ -1033,7 +1039,7 @@
         cursor: pointer;
         border: none;
         background: transparent;
-        color: #6b9e88;
+        color: #4a7c66;
         font-family: var(--font);
         transition: all 0.2s;
       }
@@ -1113,7 +1119,7 @@
       }
       .drop-zone-sub {
         font-size: 13px;
-        color: #6b9e88;
+        color: #4a7c66;
       }
       #file-input {
         display: none;
@@ -1191,7 +1197,7 @@
       }
       .user-card-meta {
         font-size: 12px;
-        color: #6b9e88;
+        color: #4a7c66;
         margin-top: 2px;
       }
       .user-grid {
@@ -1217,7 +1223,7 @@
       .empty-state {
         text-align: center;
         padding: 60px 20px;
-        color: #6b9e88;
+        color: #4a7c66;
       }
       .empty-state div {
         font-size: 40px;
@@ -1483,12 +1489,12 @@
       }
       .login-email-note {
         font-size: 11px;
-        color: #6b9e88;
+        color: #4a7c66;
         margin-top: 4px;
       }
       .user-card-email {
         font-size: 11px;
-        color: #6b9e88;
+        color: #4a7c66;
         margin-top: 1px;
       }
 
@@ -1499,7 +1505,7 @@
       }
       .login-email-note {
         font-size: 11px;
-        color: #6b9e88;
+        color: #4a7c66;
         margin-top: 4px;
       }
     </style>
@@ -2472,7 +2478,7 @@
                 id="d-nama"
               ></div>
               <div
-                style="font-size: 12px; color: #6b9e88; margin-top: 2px"
+                style="font-size: 12px; color: #4a7c66; margin-top: 2px"
                 id="d-nip"
               ></div>
             </div>
@@ -5141,7 +5147,7 @@
         });
         document.getElementById("purna-body").innerHTML =
           rows ||
-          '<tr><td colspan="11" style="text-align:center;padding:40px;color:#6b9e88">Tidak ada data pegawai purna tugas</td></tr>';
+          '<tr><td colspan="11" style="text-align:center;padding:40px;color:#4a7c66">Tidak ada data pegawai purna tugas</td></tr>';
         var pb = document.getElementById("purna-page-btns");
         pb.innerHTML = "";
         if (purnaPage > 1) addPageBtn(pb, "<", purnaPage - 1, "purna");
