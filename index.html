@@ -292,7 +292,7 @@
       }
       .btn-warning {
         background: rgba(245, 158, 11, 0.15);
-        color: #b45309;
+        color: #92400e;
         border: 1px solid rgba(245, 158, 11, 0.3);
       }
       .btn-warning:hover {
@@ -650,7 +650,7 @@
       }
       .badge-pppk {
         background: rgba(180, 83, 9, 0.12);
-        color: #b45309;
+        color: #92400e;
       }
       .badge-dosen {
         background: rgba(109, 40, 217, 0.1);
@@ -682,7 +682,7 @@
       }
       .badge-menunggu {
         background: rgba(245, 158, 11, 0.15);
-        color: #b45309;
+        color: #92400e;
       }
       .badge-selesai {
         background: rgba(22, 208, 134, 0.15);
@@ -3599,7 +3599,7 @@
           var y = parseInt(labels[i]);
           if (y <= yr + 2) return "#ef4444";
           if (v === maxVal && v > 0) return "#f59e0b";
-          return "#12aa6e";
+          return "#12a96d";
         });
         var bdColors = data.map(function (v, i) {
           var y = parseInt(labels[i]);
@@ -3664,7 +3664,7 @@
         var agVals = Object.values(ag);
         var agHL = highlightColors(
           agVals,
-          "#12aa6e",
+          "#12a96d",
           "#0b7a4e",
           "#f59e0b",
           "#b45309",
@@ -3694,7 +3694,7 @@
         });
         var pdHL = highlightColors(
           pdV,
-          "#12aa6e",
+          "#12a96d",
           "#0b7a4e",
           "#f59e0b",
           "#b45309",
@@ -3721,7 +3721,7 @@
         });
         var gmHL = highlightColors(
           gv,
-          "#12aa6e",
+          "#12a96d",
           "#0b7a4e",
           "#f59e0b",
           "#b45309",
@@ -3752,7 +3752,7 @@
         });
         var jHL = highlightColors(
           jv,
-          "#12aa6e",
+          "#12a96d",
           "#0b7a4e",
           "#f59e0b",
           "#b45309",
@@ -4742,7 +4742,7 @@
             var modeBadge =
               r.mode === "insert"
                 ? '<span class="badge" style="background:rgba(22,208,134,.15);color:#0b7a4e">Baru</span>'
-                : '<span class="badge" style="background:rgba(245,158,11,.15);color:#b45309">Update</span>';
+                : '<span class="badge" style="background:rgba(245,158,11,.15);color:#92400e">Update</span>';
             return (
               "<tr>" +
               "<td>" +
@@ -5103,7 +5103,7 @@
             statusLabel === "Meninggal"
               ? "background:rgba(100,116,139,.15);color:#475569"
               : statusLabel === "Pensiun Dini"
-                ? "background:rgba(245,158,11,.15);color:#b45309"
+                ? "background:rgba(245,158,11,.15);color:#92400e"
                 : "background:rgba(18,170,110,.12);color:#0b7a4e";
           var statusBadge =
             '<span class="badge" style="' +
