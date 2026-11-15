@@ -1499,6 +1499,32 @@
         color: #4a7c66;
         margin-top: 1px;
       }
+
+      /* ── FOKUS & REDUCED MOTION ── */
+      :focus-visible {
+        outline: 2px solid #0b7a4e;
+        outline-offset: 2px;
+      }
+      .sidebar :focus-visible {
+        outline-color: #6ee9be;
+      }
+      .input-wrap input:focus,
+      .input-wrap select:focus,
+      .form-input:focus,
+      .form-select:focus {
+        border-color: #0b7a4e;
+        box-shadow: 0 0 0 3px rgba(11, 122, 78, 0.2);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+        }
+        .toast {
+          animation: none;
+        }
+      }
     </style>
   </head>
   <body>
